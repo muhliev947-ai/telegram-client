@@ -2,26 +2,23 @@ import { Client } from 'tdl';
 import { TDLib } from 'tdl-tdlib-addon';
 
 // === ТВОИ ДАННЫЕ ===
-const API_ID = 34281403; 
+const API_ID = 34281403;
 const API_HASH = '8789dbd79d010bad5e08ec832c955687';
 
 // === ЛОВИМ ВСЕ НЕОБРАБОТАННЫЕ ОШИБКИ ===
-process.on('unhandledRejection', e => {
-  console.log('UNHANDLED REJECTION:', e);
-});
-
-process.on('uncaughtException', e => {
-  console.log('UNCAUGHT EXCEPTION:', e);
-});
+process.on('unhandledRejection', e => console.log('UNHANDLED REJECTION:', e));
+process.on('uncaughtException', e => console.log('UNCAUGHT EXCEPTION:', e));
 
 // === КЛИЕНТ TDLib ===
-const client = new Client(new TDLib('/usr/local/lib/libtdjson.so')
-, {
-  apiId: API_ID,
-  apiHash: API_HASH,
-  databaseDirectory: '_td_database',
-  filesDirectory: '_td_files'
-});
+const client = new Client(
+  new TDLib('/usr/local/lib/libtdjson.so'),
+  {
+    apiId: API_ID,
+    apiHash: API_HASH,
+    databaseDirectory: '_td_database',
+    filesDirectory: '_td_files'
+  }
+);
 
 let paramsSet = false;
 
@@ -46,9 +43,11 @@ const leadKeywords = [
   'нужен web разработчик'
 ];
 
-// === ОСНОВНОЙ ОБРАБОТЧИК ОБНОВЛЕНИЙ ===
+// === ОБРАБОТЧИК ОБНОВЛЕНИЙ ===
 client.on('update', async update => {
-  console.log('UPDATE:', update);
+  // 🔥 Отключаем спам логов
+  if (update._ !== 'updateNewMessage' &&
+      update._ !== 'updateAuthorizationState') return;
 
   // --- АВТОРИЗАЦИЯ ---
   if (update._ === 'updateAuthorizationState') {
@@ -58,7 +57,7 @@ client.on('update', async update => {
       paramsSet = true;
 
       try {
-        const res = await client.invoke({
+        await client.invoke({
           _: 'setTdlibParameters',
           parameters: {
             _: 'tdlibParameters',
@@ -68,14 +67,14 @@ client.on('update', async update => {
             api_id: API_ID,
             api_hash: API_HASH,
             system_language_code: 'en',
-            device_model: 'PC',
+            device_model: 'Railway',
             system_version: 'Linux',
             application_version: '1.0',
             enable_storage_optimizer: true
           }
         });
 
-        console.log('setTdlibParameters OK:', res);
+        console.log('TDLib parameters set.');
       } catch (e) {
         console.log('setTdlibParameters ERROR:', e);
       }
@@ -89,7 +88,7 @@ client.on('update', async update => {
           _: 'requestQrCodeAuthentication',
           other_user_ids: []
         });
-        console.log('requestQrCodeAuthentication OK:', res);
+        console.log('QR-код готов:', res);
       } catch (e) {
         console.log('requestQrCodeAuthentication ERROR:', e);
       }
@@ -98,14 +97,13 @@ client.on('update', async update => {
     if (state === 'authorizationStateWaitOtherDeviceConfirmation') {
       console.log('\n=== QR LINK ===');
       console.log(update.authorization_state.link);
-      console.log('Открой эту ссылку в Telegram, чтобы авторизоваться.');
       console.log('===============\n');
     }
 
     return;
   }
 
-  // --- ОБРАБОТКА НОВЫХ СООБЩЕНИЙ (АГЕНТ VERTEX) ---
+  // --- НОВОЕ СООБЩЕНИЕ ---
   if (update._ === 'updateNewMessage') {
     const msg = update.message;
 
@@ -121,7 +119,6 @@ client.on('update', async update => {
 
     const text = textRaw.toLowerCase();
 
-    // проверяем, есть ли ключевые слова
     const isLead = leadKeywords.some(keyword => text.includes(keyword));
     if (!isLead) return;
 
