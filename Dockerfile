@@ -2,8 +2,10 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Обновляем систему
 RUN apt update && apt upgrade -y
 
+# Устанавливаем зависимости для сборки TDLib
 RUN apt install -y \
     git \
     cmake \
@@ -22,12 +24,14 @@ RUN apt install -y \
     wget \
     curl \
     python3 \
-    nodejs \
-    npm \
     pkg-config \
     libtool \
     autoconf \
     automake
+
+# Устанавливаем Node.js 18 (поддерживает optional chaining)
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash -
+RUN apt install -y nodejs
 
 # Скачиваем TDLib
 RUN git clone https://github.com/tdlib/td.git /tdlib
