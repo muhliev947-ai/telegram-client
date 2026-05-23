@@ -1,5 +1,7 @@
 FROM ubuntu:22.04
 
+ENV DEBIAN_FRONTEND=noninteractive
+
 RUN apt update && apt upgrade -y
 
 RUN apt install -y \
@@ -21,7 +23,11 @@ RUN apt install -y \
     curl \
     python3 \
     nodejs \
-    npm
+    npm \
+    pkg-config \
+    libtool \
+    autoconf \
+    automake
 
 # Скачиваем TDLib
 RUN git clone https://github.com/tdlib/td.git /tdlib
