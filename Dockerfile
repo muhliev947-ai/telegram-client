@@ -1,9 +1,7 @@
 FROM ubuntu:22.04
 
-# Обновляем систему
 RUN apt update && apt upgrade -y
 
-# Устанавливаем зависимости для сборки TDLib
 RUN apt install -y \
     git \
     cmake \
@@ -13,6 +11,12 @@ RUN apt install -y \
     libssl-dev \
     libreadline-dev \
     libconfig++-dev \
+    libc++-dev \
+    libc++abi-dev \
+    gperf \
+    php-cli \
+    php-mbstring \
+    php-xml \
     wget \
     curl \
     python3 \
@@ -28,20 +32,14 @@ WORKDIR /tdlib/build
 RUN cmake -DCMAKE_BUILD_TYPE=Release ..
 RUN cmake --build . --target install -j4
 
-# Создаём рабочую директорию
+# Переходим к приложению
 WORKDIR /app
 
-# Копируем package.json
 COPY package*.json ./
-
-# Устанавливаем зависимости Node.js
 RUN npm install
 
-# Копируем весь проект
 COPY . .
 
-# Указываем путь к собранной библиотеке TDLib
 ENV LD_LIBRARY_PATH=/usr/local/lib
 
-# Запускаем бота
 CMD ["node", "client.js"]
