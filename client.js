@@ -2,8 +2,8 @@ import { Client } from 'tdl';
 import { TDLib } from 'tdl-tdlib-addon';
 
 // === ТВОИ ДАННЫЕ ===
-const API_ID; 
-const API_HASH;
+const API_ID = 34281403; 
+const API_HASH = '8789dbd79d010bad5e08ec832c955687';
 
 // === ЛОВИМ ВСЕ НЕОБРАБОТАННЫЕ ОШИБКИ ===
 process.on('unhandledRejection', e => {
