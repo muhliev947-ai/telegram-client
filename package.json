@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "tdl": "^7.1.0",
+    "tdl-tdlib-addon": "^1.2.2"
+  }
+}
