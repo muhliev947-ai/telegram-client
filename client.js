@@ -15,7 +15,8 @@ process.on('uncaughtException', e => {
 });
 
 // === КЛИЕНТ TDLib ===
-const client = new Client(new TDLib('./tdlib/libtdjson.so'), {
+const client = new Client(new TDLib('/usr/local/lib/libtdjson.so')
+, {
   apiId: API_ID,
   apiHash: API_HASH,
   databaseDirectory: '_td_database',
