@@ -65,6 +65,14 @@ async function handleUpdate(update) {
   // Примечание: setTdlibParameters и checkDatabaseEncryptionKey уже
   // обрабатываются внутри tdl автоматически — дублировать не нужно.
 
+  // Если TDLib запросил номер телефона — переключаемся на QR-код
+  if (stateType === "authorizationStateWaitPhoneNumber") {
+    console.log("Phone number requested, requesting QR code instead...");
+    await client.invoke({
+      "@type": "requestQrCodeAuthentication",
+    });
+  }
+
   // QR-код
   if (stateType === "authorizationStateWaitOtherDeviceConfirmation") {
     console.log("=== QR LINK ===");
