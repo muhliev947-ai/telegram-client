@@ -18,8 +18,8 @@ const tdlib = new TDLib();
 
 // Создаём клиент (tdl 7.1.0)
 const client = new Client(tdlib, {
-  apiId: Number(process.env.API_ID),
-  apiHash: process.env.API_HASH,
+  apiId: Number(process.env.TELEGRAM_API_ID),
+  apiHash: process.env.TELEGRAM_API_HASH,
   databaseDirectory: "_td_database",
   filesDirectory: "_td_files",
 });
@@ -43,8 +43,8 @@ client.on("update", async (update) => {
       "@type": "setTdlibParameters",
       parameters: {
         "@type": "tdlibParameters",
-        api_id: Number(process.env.API_ID),
-        api_hash: process.env.API_HASH,
+        api_id: Number(process.env.TELEGRAM_API_ID),
+        api_hash: process.env.TELEGRAM_API_HASH,
         system_language_code: "en",
         device_model: "Railway",
         system_version: "Linux",
