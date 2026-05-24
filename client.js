@@ -1,17 +1,7 @@
-import fs from "fs";
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 
 console.log("=== CLIENT.JS STARTED ===");
-
-// Удаляем старую базу
-try {
-  fs.rmSync("_td_database", { recursive: true });
-  fs.rmSync("_td_files", { recursive: true });
-  console.log("TDLib storage cleared.");
-} catch (e) {
-  console.log("No old TDLib storage.");
-}
 
 // Инициализация TDLib
 const tdlib = new TDLib();
