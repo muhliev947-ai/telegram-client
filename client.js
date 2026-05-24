@@ -29,44 +29,52 @@ client.on("error", (err) => console.error("TDLib ERROR:", err));
 
 // Ловим ВСЕ обновления (важно!)
 client.on("update", async (update) => {
-  // Логируем всё, чтобы видеть, что приходит
-  console.log("UPDATE:", update["@type"]);
+  // Логируем полную структуру объекта, чтобы видеть реальный формат от TDLib
+  console.log("UPDATE:", JSON.stringify(update));
 
-  if (update["@type"] !== "updateAuthorizationState") return;
-
-  const state = update.authorization_state;
-  console.log("AUTH STATE:", state["@type"]);
-
-  // TDLib ждёт параметры
-  if (state["@type"] === "authorizationStateWaitTdlibParameters") {
-    await client.invoke({
-      "@type": "setTdlibParameters",
-      parameters: {
-        "@type": "tdlibParameters",
-        api_id: Number(process.env.TELEGRAM_API_ID),
-        api_hash: process.env.TELEGRAM_API_HASH,
-        system_language_code: "en",
-        device_model: "Railway",
-        system_version: "Linux",
-        application_version: "1.0",
-        enable_storage_optimizer: true,
-        database_directory: "_td_database",
-        files_directory: "_td_files",
-      },
-    });
+  // tdl переименовывает @type -> _ внутри библиотеки перед эмитом события,
+  // поэтому используем "_" вместо "@type"
+  // Если вдруг пришёл массив — обрабатываем каждый элемент отдельно
+  if (Array.isArray(update)) {
+    console.log("UPDATE is an array, processing each item...");
+    for (const item of update) {
+      await handleUpdate(item);
+    }
+    return;
   }
 
+  await handleUpdate(update);
+});
+
+async function handleUpdate(update) {
+  const updateType = update["_"] || update["@type"];
+  console.log("UPDATE TYPE:", updateType);
+
+  if (updateType !== "updateAuthorizationState") return;
+
+  const state = update.authorization_state;
+  if (!state) {
+    console.log("AUTH STATE: missing authorization_state field, full update:", JSON.stringify(update));
+    return;
+  }
+
+  const stateType = state["_"] || state["@type"];
+  console.log("AUTH STATE:", stateType);
+
+  // Примечание: setTdlibParameters и checkDatabaseEncryptionKey уже
+  // обрабатываются внутри tdl автоматически — дублировать не нужно.
+
   // QR-код
-  if (state["@type"] === "authorizationStateWaitOtherDeviceConfirmation") {
+  if (stateType === "authorizationStateWaitOtherDeviceConfirmation") {
     console.log("=== QR LINK ===");
     console.log(state.link);
   }
 
   // Успешная авторизация
-  if (state["@type"] === "authorizationStateReady") {
+  if (stateType === "authorizationStateReady") {
     console.log("=== AUTH OK ===");
   }
-});
+}
 
 // Запуск клиента
 (async () => {
