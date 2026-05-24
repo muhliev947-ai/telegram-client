@@ -10,6 +10,7 @@ process.on('unhandledRejection', e => console.log('UNHANDLED REJECTION:', e));
 process.on('uncaughtException', e => console.log('UNCAUGHT EXCEPTION:', e));
 
 // === КЛИЕНТ TDLib ===
+// ВАЖНО: apiId и apiHash передаются ТОЛЬКО здесь!
 const client = new Client(
   new TDLib('/usr/local/lib/libtdjson.so'),
   {
@@ -24,28 +25,15 @@ let paramsSet = false;
 
 // === КЛЮЧЕВЫЕ СЛОВА ДЛЯ ЛИДОВ ===
 const leadKeywords = [
-  'нужен разработчик',
-  'ищем разработчика',
-  'нужен сайт',
-  'нужен бот',
-  'telegram бот',
-  'телеграм бот',
-  'нужен программист',
-  'ищем программиста',
-  'нужен фронтендер',
-  'нужен фронт',
-  'нужен ai',
-  'нужен дизайн',
-  'нужен веб',
-  'нужен сайт срочно',
-  'разработчик срочно',
-  'нужен веб-разработчик',
-  'нужен web разработчик'
+  'нужен разработчик', 'ищем разработчика', 'нужен сайт', 'нужен бот',
+  'telegram бот', 'телеграм бот', 'нужен программист', 'ищем программиста',
+  'нужен фронтендер', 'нужен фронт', 'нужен ai', 'нужен дизайн',
+  'нужен веб', 'нужен сайт срочно', 'разработчик срочно',
+  'нужен веб-разработчик', 'нужен web разработчик'
 ];
 
 // === ОБРАБОТЧИК ОБНОВЛЕНИЙ ===
 client.on('update', async update => {
-  // 🔥 Отключаем спам логов
   if (update._ !== 'updateNewMessage' &&
       update._ !== 'updateAuthorizationState') return;
 
@@ -53,6 +41,7 @@ client.on('update', async update => {
   if (update._ === 'updateAuthorizationState') {
     const state = update.authorization_state._;
 
+    // === ПЕРЕДАЁМ ПАРАМЕТРЫ TDLib (БЕЗ api_id и api_hash!) ===
     if (state === 'authorizationStateWaitTdlibParameters' && !paramsSet) {
       paramsSet = true;
 
@@ -64,11 +53,9 @@ client.on('update', async update => {
             use_test_dc: false,
             database_directory: '_td_database',
             files_directory: '_td_files',
-            api_id: 34281403,
-            api_hash: '8789dbd79d010bad5e08ec832c955687',
             system_language_code: 'en',
-            device_model: 'Railway',
-            system_version: 'Linux',
+            device_model: 'Linux',
+            system_version: 'Ubuntu',
             application_version: '1.0',
             enable_storage_optimizer: true
           }
@@ -80,6 +67,7 @@ client.on('update', async update => {
       }
     }
 
+    // === ЗАПРОС QR-КОДА ===
     if (state === 'authorizationStateWaitPhoneNumber') {
       console.log('Запрашиваю QR-код...');
 
@@ -94,6 +82,7 @@ client.on('update', async update => {
       }
     }
 
+    // === ПОКАЗ QR-ССЫЛКИ ===
     if (state === 'authorizationStateWaitOtherDeviceConfirmation') {
       console.log('\n=== QR LINK ===');
       console.log(update.authorization_state.link);
