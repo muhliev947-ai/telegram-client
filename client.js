@@ -2,6 +2,9 @@ import fs from "fs";
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 
+// === ЛОГ СТАРТА ===
+console.log("=== CLIENT.JS STARTED ===");
+
 // === Удаляем старую базу TDLib ===
 // Это критично для Railway — иначе TDLib думает, что ты уже авторизован
 try {
