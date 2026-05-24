@@ -2,22 +2,23 @@ import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 import fs from "fs";
 
-console.log("=== CLIENT.JS STARTED ===");
+console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.0 ===");
 
+// Очистка базы по запросу
 if (process.env.RESET_AUTH === "true") {
-  console.log("RESET_AUTH=true detected — clearing TDLib database...");
+  console.log("⚠ RESET_AUTH=true → очищаю TDLib базу...");
   try {
     fs.rmSync("_td_database", { recursive: true, force: true });
-    console.log("Database cleared successfully.");
+    console.log("✔ База очищена");
   } catch (err) {
-    console.log("Warning: Could not delete database folder:", err.message);
+    console.log("❌ Ошибка удаления базы:", err.message);
   }
 }
 
 // Инициализация TDLib
 const tdlib = new TDLib();
 
-// Создаём клиент (tdl 7.1.0)
+// Создаём клиент
 const client = new Client(tdlib, {
   apiId: Number(process.env.TELEGRAM_API_ID),
   apiHash: process.env.TELEGRAM_API_HASH,
@@ -25,69 +26,152 @@ const client = new Client(tdlib, {
   filesDirectory: "_td_files",
 });
 
-// Ловим ошибки
-client.on("error", (err) => console.error("TDLib ERROR:", err));
+// ====== КОНФИГ АГЕНТА ======
 
-// Ловим ВСЕ обновления (важно!)
+const keywords = [
+  "сайт", "сайты", "разработка", "разработчик",
+  "бот", "боты", "telegram bot", "телеграм бот",
+  "веб", "web", "frontend", "backend",
+  "дизайн", "ui", "ux",
+  "seo", "реклама", "продвижение", "лендинг"
+];
+
+const VERTEX_MESSAGE = `
+💼 *Услуги и цены VERTEX*
+
+🖥 *Веб‑разработка*
+• Landing page — от *1500 ₽*
+• Корпоративный сайт — от *3500 ₽*
+• Интернет‑магазин — от *6000 ₽*
+• SaaS / Dashboard — от *9000 ₽*
+
+🎨 *Дизайн и брендинг*
+• Логотип и фирменный стиль — от *1000 ₽*
+• UI/UX дизайн — от *2000 ₽*
+
+📈 *Продвижение*
+• SEO — от *1500 ₽*
+• Контекстная реклама — от *2000 ₽*
+
+🤖 *Автоматизация*
+• Telegram‑бот — от *1200 ₽*
+• CRM‑интеграция — от *2500 ₽*
+
+⚡️ *Скидка 10% на первый проект!*
+
+🌐 https://next-site-self-two.vercel.app
+📱 Telegram: @Fulstak_raz
+📧 Email: vertexsite07@gmail.com
+📞 Телефон: +7 928 092‑2250
+`;
+
+// Антиспам: чтобы агент не отвечал 100 раз на один и тот же пост
+const answeredMessages = new Set();
+
+// ====== ОБРАБОТКА ОБНОВЛЕНИЙ ======
+
+client.on("error", (err) => console.error("❌ TDLib ERROR:", err));
+
 client.on("update", async (update) => {
-  // Логируем полную структуру объекта, чтобы видеть реальный формат от TDLib
-  console.log("UPDATE:", JSON.stringify(update));
-
-  // tdl переименовывает @type -> _ внутри библиотеки перед эмитом события,
-  // поэтому используем "_" вместо "@type"
-  // Если вдруг пришёл массив — обрабатываем каждый элемент отдельно
   if (Array.isArray(update)) {
-    console.log("UPDATE is an array, processing each item...");
-    for (const item of update) {
-      await handleUpdate(item);
-    }
+    for (const item of update) await handleUpdate(item);
     return;
   }
-
   await handleUpdate(update);
 });
 
 async function handleUpdate(update) {
-  const updateType = update["_"] || update["@type"];
-  console.log("UPDATE TYPE:", updateType);
+  const type = update._;
 
-  if (updateType !== "updateAuthorizationState") return;
+  // Авторизация
+  if (type === "updateAuthorizationState") {
+    const state = update.authorization_state;
+    const stateType = state._;
 
-  const state = update.authorization_state;
-  if (!state) {
-    console.log("AUTH STATE: missing authorization_state field, full update:", JSON.stringify(update));
-    return;
+    console.log("🔐 AUTH STATE:", stateType);
+
+    if (stateType === "authorizationStateWaitPhoneNumber") {
+      console.log("📲 Запрошен номер → переключаюсь на QR...");
+      await client.invoke({ "@type": "requestQrCodeAuthentication" });
+    }
+
+    if (stateType === "authorizationStateWaitOtherDeviceConfirmation") {
+      console.log("🔗 === QR LINK ===");
+      console.log(state.link);
+    }
+
+    if (stateType === "authorizationStateReady") {
+      console.log("🎉 === AUTH OK — АГЕНТ ГОТОВ ===");
+      startAgent();
+    }
   }
 
-  const stateType = state["_"] || state["@type"];
-  console.log("AUTH STATE:", stateType);
+  // Новые сообщения
+  if (type === "updateNewMessage") {
+    const msg = update.message;
 
-  // Примечание: setTdlibParameters и checkDatabaseEncryptionKey уже
-  // обрабатываются внутри tdl автоматически — дублировать не нужно.
-
-  // Если TDLib запросил номер телефона — переключаемся на QR-код
-  if (stateType === "authorizationStateWaitPhoneNumber") {
-    console.log("Phone number requested, requesting QR code instead...");
-    await client.invoke({
-      "@type": "requestQrCodeAuthentication",
-    });
+    if (msg.is_channel_post) {
+      await onChannelMessage(msg);
+    } else {
+      await onPrivateMessage(msg);
+    }
   }
+}
 
-  // QR-код
-  if (stateType === "authorizationStateWaitOtherDeviceConfirmation") {
-    console.log("=== QR LINK ===");
-    console.log(state.link);
-  }
+// ====== ЛОГИКА АГЕНТА ======
 
-  // Успешная авторизация
-  if (stateType === "authorizationStateReady") {
-    console.log("=== AUTH OK ===");
+function startAgent() {
+  console.log("🤖 Агент VERTEX работает 24/7 и слушает каналы...");
+}
+
+// Сообщения из каналов
+async function onChannelMessage(msg) {
+  const text = msg?.content?.text?.text?.toLowerCase() || "";
+  const chatId = msg.chat_id;
+  const messageId = msg.id;
+
+  console.log(`📡 Канал → ${text}`);
+
+  // Антиспам
+  if (answeredMessages.has(messageId)) return;
+  answeredMessages.add(messageId);
+
+  // Проверка ключевых слов
+  if (keywords.some(k => text.includes(k))) {
+    console.log("🎯 Найдено ключевое слово → отправляю VERTEX сообщение");
+    await sendText(chatId, VERTEX_MESSAGE);
   }
+}
+
+// Личные сообщения
+async function onPrivateMessage(msg) {
+  const text = msg?.content?.text?.text || "";
+  const chatId = msg.chat_id;
+
+  console.log(`💬 Личка → ${text}`);
+
+  if (text.toLowerCase().includes("привет")) {
+    await sendText(chatId, "Привет! Я агент VERTEX 😎");
+  }
+}
+
+// Отправка сообщений
+async function sendText(chatId, text) {
+  await client.invoke({
+    "@type": "sendMessage",
+    chat_id: chatId,
+    input_message_content: {
+      "@type": "inputMessageText",
+      text: { "@type": "formattedText", text },
+    },
+  });
+
+  console.log(`📤 Отправлено сообщение`);
 }
 
 // Запуск клиента
 (async () => {
-  console.log("Клиент запускается...");
+  console.log("⏳ Запуск клиента...");
   await client.connect();
-  console.log("Клиент запущен. Жду QR-код или новые сообщения...");
+  console.log("✔ Клиент подключён. Жду QR или сообщения...");
 })();
