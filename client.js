@@ -1,21 +1,44 @@
+import fs from "fs";
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 
+// === Удаляем старую базу TDLib ===
+// Это критично для Railway — иначе TDLib думает, что ты уже авторизован
+try {
+  fs.rmSync("_td_database", { recursive: true });
+  fs.rmSync("_td_files", { recursive: true });
+  console.log("TDLib storage cleared.");
+} catch (e) {
+  console.log("No old TDLib storage.");
+}
+
+// === TDLib ===
 const tdlib = new TDLib("/usr/local/lib/libtdjson.so");
 
+// === Клиент ===
 const client = new Client(tdlib, {
   apiId: Number(process.env.API_ID),
   apiHash: process.env.API_HASH,
+  databaseDirectory: "_td_database",
+  filesDirectory: "_td_files",
 });
 
+// === Логирование TDLib ===
+client.on("error", (err) => {
+  console.error("TDLib ERROR:", err);
+});
+
+// === Авторизация ===
 client.on("auth-state-update", async (state) => {
-  console.log("AUTH:", state["@type"]);
+  console.log("AUTH STATE:", state["@type"]);
 
   if (state["@type"] === "authorizationStateWaitTdlibParameters") {
+    console.log("Передаю TDLib параметры...");
     await client.invoke({
       "@type": "setTdlibParameters",
       parameters: {
         "@type": "tdlibParameters",
+        use_test_dc: false,
         api_id: Number(process.env.API_ID),
         api_hash: process.env.API_HASH,
         system_language_code: "en",
@@ -23,8 +46,8 @@ client.on("auth-state-update", async (state) => {
         system_version: "Linux",
         application_version: "1.0",
         enable_storage_optimizer: true,
-        database_directory: "_db",
-        files_directory: "_files",
+        database_directory: "_td_database",
+        files_directory: "_td_files",
       },
     });
   }
@@ -35,12 +58,62 @@ client.on("auth-state-update", async (state) => {
   }
 
   if (state["@type"] === "authorizationStateReady") {
-    console.log("=== AUTH OK ===");
+    console.log("=== АВТОРИЗАЦИЯ УСПЕШНА ===");
+    console.log("Агент активен и слушает сообщения.");
   }
 });
 
+// === Логика лидов ===
+const leadKeywords = [
+  "нужен сайт",
+  "нужен разработчик",
+  "ищем программиста",
+  "нужен бот",
+  "нужен телеграм бот",
+  "нужен сайт срочно",
+  "нужен лендинг",
+  "нужен фронтенд",
+  "нужен backend",
+  "нужен fullstack",
+];
+
+client.on("update", async (update) => {
+  if (update["@type"] !== "updateNewMessage") return;
+
+  const msg = update.message;
+  if (!msg || !msg.content || msg.content["@type"] !== "messageText") return;
+
+  const text = msg.content.text.text.toLowerCase();
+  const chatId = msg.chat_id;
+
+  const isLead = leadKeywords.some((k) => text.includes(k));
+  if (!isLead) return;
+
+  console.log("=== ЛИД НАЙДЕН ===");
+  console.log("Чат:", chatId);
+  console.log("Текст:", text);
+
+  await client.invoke({
+    "@type": "sendMessage",
+    chat_id: chatId,
+    input_message_content: {
+      "@type": "inputMessageText",
+      text: {
+        "@type": "formattedText",
+        text:
+          "Привет! 👋\n" +
+          "Я увидел, что вам нужен разработчик.\n" +
+          "Готов обсудить задачу и приступить к работе!",
+      },
+    },
+  });
+
+  console.log("Ответ отправлен.");
+});
+
+// === Запуск ===
 (async () => {
-  console.log("STARTING...");
+  console.log("Клиент запускается...");
   await client.connect();
-  console.log("CONNECTED. WAITING FOR QR...");
+  console.log("Клиент запущен. Жду QR-код или новые сообщения...");
 })();
