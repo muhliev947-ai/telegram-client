@@ -16,7 +16,7 @@ try {
 // Инициализация TDLib
 const tdlib = new TDLib();
 
-// Создаём клиент (tdl 7.1.0 использует класс Client)
+// Создаём клиент (tdl 7.1.0)
 const client = new Client(tdlib, {
   apiId: Number(process.env.API_ID),
   apiHash: process.env.API_HASH,
@@ -27,8 +27,11 @@ const client = new Client(tdlib, {
 // Ловим ошибки
 client.on("error", (err) => console.error("TDLib ERROR:", err));
 
-// Ловим обновления
+// Ловим ВСЕ обновления (важно!)
 client.on("update", async (update) => {
+  // Логируем всё, чтобы видеть, что приходит
+  console.log("UPDATE:", update["@type"]);
+
   if (update["@type"] !== "updateAuthorizationState") return;
 
   const state = update.authorization_state;
