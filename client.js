@@ -1,7 +1,13 @@
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
+import fs from "fs";
 
 console.log("=== CLIENT.JS STARTED ===");
+
+if (process.env.RESET_AUTH === "true") {
+  console.log("RESET_AUTH=true detected — clearing TDLib database...");
+  fs.rmSync("_td_database", { recursive: true, force: true });
+}
 
 // Инициализация TDLib
 const tdlib = new TDLib();
