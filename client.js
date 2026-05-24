@@ -1,12 +1,9 @@
-import { Client, TDLib } from "tdl";
-import { TDLib as TDLibAddon } from "tdl-tdlib-addon";
-import dotenv from "dotenv";
-
-dotenv.config();
+import { Client } from "tdl";
+import { TDLib } from "tdl-tdlib-addon";
 
 // === TDLib ===
-// Railway использует /usr/local/lib/libtdjson.so
-const tdlib = new TDLibAddon("/usr/local/lib/libtdjson.so");
+// Railway ставит libtdjson.so в /usr/local/lib
+const tdlib = new TDLib("/usr/local/lib/libtdjson.so");
 
 // === Клиент ===
 const client = new Client(tdlib, {
@@ -22,12 +19,13 @@ client.on("error", (err) => {
 });
 
 client.on("update", (update) => {
-  console.log("UPDATE:", update);
+  // Можно включить для дебага:
+  // console.log("UPDATE:", update);
 });
 
 // === Авторизация ===
 client.on("auth-state-update", async (state) => {
-  console.log("AUTH STATE:", state);
+  console.log("AUTH STATE:", state["@type"]);
 
   if (state["@type"] === "authorizationStateWaitTdlibParameters") {
     console.log("Передаю TDLib параметры...");
