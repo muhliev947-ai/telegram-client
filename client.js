@@ -6,7 +6,12 @@ console.log("=== CLIENT.JS STARTED ===");
 
 if (process.env.RESET_AUTH === "true") {
   console.log("RESET_AUTH=true detected — clearing TDLib database...");
-  fs.rmSync("_td_database", { recursive: true, force: true });
+  try {
+    fs.rmSync("_td_database", { recursive: true, force: true });
+    console.log("Database cleared successfully.");
+  } catch (err) {
+    console.log("Warning: Could not delete database folder:", err.message);
+  }
 }
 
 // Инициализация TDLib
