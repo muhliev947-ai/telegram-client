@@ -1,178 +1,116 @@
-import { Client } from 'tdl';
-import { TDLib } from 'tdl-tdlib-addon';
+import { Client, TDLib } from "tdl";
+import { TDLib as TDLibAddon } from "tdl-tdlib-addon";
+import dotenv from "dotenv";
 
-// === ТВОИ ДАННЫЕ ===
-const API_ID = 34281403;
-const API_HASH = '8789dbd79d010bad5e08ec832c955687';
+dotenv.config();
 
-// === ЛОВИМ ВСЕ НЕОБРАБОТАННЫЕ ОШИБКИ ===
-process.on('unhandledRejection', e => console.log('UNHANDLED REJECTION:', e));
-process.on('uncaughtException', e => console.log('UNCAUGHT EXCEPTION:', e));
+// === TDLib ===
+// Railway использует /usr/local/lib/libtdjson.so
+const tdlib = new TDLibAddon("/usr/local/lib/libtdjson.so");
 
-// === КЛИЕНТ TDLib ===
-// ВАЖНО: apiId и apiHash передаются ТОЛЬКО здесь!
-const client = new Client(
-  new TDLib('/usr/local/lib/libtdjson.so'),
-  {
-    apiId: API_ID,
-    apiHash: API_HASH,
-    databaseDirectory: '_td_database',
-    filesDirectory: '_td_files'
-  }
-);
+// === Клиент ===
+const client = new Client(tdlib, {
+  apiId: Number(process.env.API_ID),
+  apiHash: process.env.API_HASH,
+  databaseDirectory: "_td_database",
+  filesDirectory: "_td_files",
+});
 
-let paramsSet = false;
+// === Логирование TDLib ===
+client.on("error", (err) => {
+  console.error("TDLib ERROR:", err);
+});
 
-// === КЛЮЧЕВЫЕ СЛОВА ДЛЯ ЛИДОВ ===
-const leadKeywords = [
-  'нужен разработчик', 'ищем разработчика', 'нужен сайт', 'нужен бот',
-  'telegram бот', 'телеграм бот', 'нужен программист', 'ищем программиста',
-  'нужен фронтендер', 'нужен фронт', 'нужен ai', 'нужен дизайн',
-  'нужен веб', 'нужен сайт срочно', 'разработчик срочно',
-  'нужен веб-разработчик', 'нужен web разработчик'
-];
+client.on("update", (update) => {
+  console.log("UPDATE:", update);
+});
 
-// === ОБРАБОТЧИК ОБНОВЛЕНИЙ ===
-client.on('update', async update => {
-  if (update._ !== 'updateNewMessage' &&
-      update._ !== 'updateAuthorizationState') return;
+// === Авторизация ===
+client.on("auth-state-update", async (state) => {
+  console.log("AUTH STATE:", state);
 
-  // --- АВТОРИЗАЦИЯ ---
-  if (update._ === 'updateAuthorizationState') {
-    const state = update.authorization_state._;
-
-    // === ПЕРЕДАЁМ ПАРАМЕТРЫ TDLib (БЕЗ api_id и api_hash!) ===
-    if (state === 'authorizationStateWaitTdlibParameters' && !paramsSet) {
-      paramsSet = true;
-
-      try {
-        await client.invoke({
-          _: 'setTdlibParameters',
-          parameters: {
-            _: 'tdlibParameters',
-            use_test_dc: false,
-            database_directory: '_td_database',
-            files_directory: '_td_files',
-            system_language_code: 'en',
-            device_model: 'Linux',
-            system_version: 'Ubuntu',
-            application_version: '1.0',
-            enable_storage_optimizer: true
-          }
-        });
-
-        console.log('TDLib parameters set.');
-      } catch (e) {
-        console.log('setTdlibParameters ERROR:', e);
-      }
-    }
-
-    // === ЗАПРОС QR-КОДА ===
-    if (state === 'authorizationStateWaitPhoneNumber') {
-      console.log('Запрашиваю QR-код...');
-
-      try {
-        const res = await client.invoke({
-          _: 'requestQrCodeAuthentication',
-          other_user_ids: []
-        });
-        console.log('QR-код готов:', res);
-      } catch (e) {
-        console.log('requestQrCodeAuthentication ERROR:', e);
-      }
-    }
-
-    // === ПОКАЗ QR-ССЫЛКИ ===
-    if (state === 'authorizationStateWaitOtherDeviceConfirmation') {
-      console.log('\n=== QR LINK ===');
-      console.log(update.authorization_state.link);
-      console.log('===============\n');
-    }
-
-    return;
+  if (state["@type"] === "authorizationStateWaitTdlibParameters") {
+    console.log("Передаю TDLib параметры...");
+    await client.invoke({
+      "@type": "setTdlibParameters",
+      parameters: {
+        "@type": "tdlibParameters",
+        use_test_dc: false,
+        api_id: Number(process.env.API_ID),
+        api_hash: process.env.API_HASH,
+        system_language_code: "en",
+        device_model: "Railway",
+        system_version: "Linux",
+        application_version: "1.0",
+        enable_storage_optimizer: true,
+        database_directory: "_td_database",
+        files_directory: "_td_files",
+      },
+    });
   }
 
-  // --- НОВОЕ СООБЩЕНИЕ ---
-  if (update._ === 'updateNewMessage') {
-    const msg = update.message;
+  if (state["@type"] === "authorizationStateWaitOtherDeviceConfirmation") {
+    console.log("=== QR LINK ===");
+    console.log(state.link);
+  }
 
-    const chatId = msg.chat_id;
-    const senderId = msg.sender_id?.user_id;
-
-    const textRaw =
-      msg.content?._ === 'messageText'
-        ? msg.content.text.text
-        : null;
-
-    if (!textRaw) return;
-
-    const text = textRaw.toLowerCase();
-
-    const isLead = leadKeywords.some(keyword => text.includes(keyword));
-    if (!isLead) return;
-
-    console.log('НАЙДЕН ЛИД! От:', senderId, 'Текст:', textRaw);
-
-    const reply = `
-Здравствуйте! 👋  
-Мы увидели, что вам требуется разработчик.
-
-Мы — **VERTEX**, команда по веб‑разработке, дизайну и автоматизации.
-
-🔗 Наш сайт: https://next-site-self-two.vercel.app  
-🤖 Наш Telegram‑бот: https://xn--80affa3aj0al.xn--80asehdb/web/#@Official_assist_bot  
-
-📌 **Услуги и цены:**
-
-🖥 *Веб‑разработка*  
-• Landing page — от 1500 ₽  
-• Корпоративный сайт — от 3500 ₽  
-• Интернет-магазин — от 6000 ₽  
-• SaaS / Dashboard — от 9000 ₽  
-
-🎨 *Дизайн и брендинг*  
-• Логотип и фирменный стиль — от 1000 ₽  
-• UI/UX дизайн сайта — от 2000 ₽  
-
-📈 *Продвижение*  
-• SEO — от 1500 ₽  
-• Контекстная реклама — от 2000 ₽  
-
-🤖 *Автоматизация*  
-• Telegram‑бот — от 1200 ₽  
-• CRM интеграция — от 2500 ₽  
-
-⚡️ *Скидка 10% на первый проект!*  
-
-Если интересно — можем обсудить детали прямо сейчас 😊
-    `;
-
-    try {
-      await client.invoke({
-        _: 'sendMessage',
-        chat_id: chatId,
-        input_message_content: {
-          _: 'inputMessageText',
-          text: {
-            _: 'formattedText',
-            text: reply
-          }
-        }
-      });
-
-      console.log('Ответ отправлен в чат', chatId);
-    } catch (e) {
-      console.log('Ошибка при отправке ответа:', e);
-    }
+  if (state["@type"] === "authorizationStateReady") {
+    console.log("=== АВТОРИЗАЦИЯ УСПЕШНА ===");
+    console.log("Агент активен и слушает сообщения.");
   }
 });
 
-// === СТАРТ КЛИЕНТА ===
+// === Логика лидов ===
+const leadKeywords = [
+  "нужен сайт",
+  "нужен разработчик",
+  "ищем программиста",
+  "нужен бот",
+  "нужен телеграм бот",
+  "нужен сайт срочно",
+  "нужен лендинг",
+  "нужен фронтенд",
+  "нужен backend",
+  "нужен fullstack",
+];
+
+client.on("update", async (update) => {
+  if (update["@type"] !== "updateNewMessage") return;
+
+  const msg = update.message;
+  if (!msg || !msg.content || msg.content["@type"] !== "messageText") return;
+
+  const text = msg.content.text.text.toLowerCase();
+  const chatId = msg.chat_id;
+
+  const isLead = leadKeywords.some((k) => text.includes(k));
+  if (!isLead) return;
+
+  console.log("=== ЛИД НАЙДЕН ===");
+  console.log("Чат:", chatId);
+  console.log("Текст:", text);
+
+  await client.invoke({
+    "@type": "sendMessage",
+    chat_id: chatId,
+    input_message_content: {
+      "@type": "inputMessageText",
+      text: {
+        "@type": "formattedText",
+        text:
+          "Привет! 👋\n" +
+          "Я увидел, что вам нужен разработчик.\n" +
+          "Готов обсудить задачу и приступить к работе!",
+      },
+    },
+  });
+
+  console.log("Ответ отправлен.");
+});
+
+// === Запуск ===
 (async () => {
-  try {
-    await client.connect();
-    console.log('Клиент запущен. Жду QR-код или новые сообщения...');
-  } catch (e) {
-    console.log('CONNECT ERROR:', e);
-  }
+  console.log("Клиент запускается...");
+  await client.connect();
+  console.log("Клиент запущен. Жду QR-код или новые сообщения...");
 })();
