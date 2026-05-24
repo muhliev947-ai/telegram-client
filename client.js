@@ -2,11 +2,9 @@ import fs from "fs";
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 
-// === ЛОГ СТАРТА ===
 console.log("=== CLIENT.JS STARTED ===");
 
-// === Удаляем старую базу TDLib ===
-// Это критично для Railway — иначе TDLib думает, что ты уже авторизован
+// Удаляем старую базу
 try {
   fs.rmSync("_td_database", { recursive: true });
   fs.rmSync("_td_files", { recursive: true });
@@ -15,10 +13,9 @@ try {
   console.log("No old TDLib storage.");
 }
 
-// === TDLib ===
-const tdlib = new TDLib("/usr/local/lib/libtdjson.so");
+// ВАЖНО: без пути!
+const tdlib = new TDLib();
 
-// === Клиент ===
 const client = new Client(tdlib, {
   apiId: Number(process.env.API_ID),
   apiHash: process.env.API_HASH,
@@ -26,22 +23,16 @@ const client = new Client(tdlib, {
   filesDirectory: "_td_files",
 });
 
-// === Логирование TDLib ===
-client.on("error", (err) => {
-  console.error("TDLib ERROR:", err);
-});
+client.on("error", (err) => console.error("TDLib ERROR:", err));
 
-// === Авторизация ===
 client.on("auth-state-update", async (state) => {
   console.log("AUTH STATE:", state["@type"]);
 
   if (state["@type"] === "authorizationStateWaitTdlibParameters") {
-    console.log("Передаю TDLib параметры...");
     await client.invoke({
       "@type": "setTdlibParameters",
       parameters: {
         "@type": "tdlibParameters",
-        use_test_dc: false,
         api_id: Number(process.env.API_ID),
         api_hash: process.env.API_HASH,
         system_language_code: "en",
@@ -61,60 +52,10 @@ client.on("auth-state-update", async (state) => {
   }
 
   if (state["@type"] === "authorizationStateReady") {
-    console.log("=== АВТОРИЗАЦИЯ УСПЕШНА ===");
-    console.log("Агент активен и слушает сообщения.");
+    console.log("=== AUTH OK ===");
   }
 });
 
-// === Логика лидов ===
-const leadKeywords = [
-  "нужен сайт",
-  "нужен разработчик",
-  "ищем программиста",
-  "нужен бот",
-  "нужен телеграм бот",
-  "нужен сайт срочно",
-  "нужен лендинг",
-  "нужен фронтенд",
-  "нужен backend",
-  "нужен fullstack",
-];
-
-client.on("update", async (update) => {
-  if (update["@type"] !== "updateNewMessage") return;
-
-  const msg = update.message;
-  if (!msg || !msg.content || msg.content["@type"] !== "messageText") return;
-
-  const text = msg.content.text.text.toLowerCase();
-  const chatId = msg.chat_id;
-
-  const isLead = leadKeywords.some((k) => text.includes(k));
-  if (!isLead) return;
-
-  console.log("=== ЛИД НАЙДЕН ===");
-  console.log("Чат:", chatId);
-  console.log("Текст:", text);
-
-  await client.invoke({
-    "@type": "sendMessage",
-    chat_id: chatId,
-    input_message_content: {
-      "@type": "inputMessageText",
-      text: {
-        "@type": "formattedText",
-        text:
-          "Привет! 👋\n" +
-          "Я увидел, что вам нужен разработчик.\n" +
-          "Готов обсудить задачу и приступить к работе!",
-      },
-    },
-  });
-
-  console.log("Ответ отправлен.");
-});
-
-// === Запуск ===
 (async () => {
   console.log("Клиент запускается...");
   await client.connect();
