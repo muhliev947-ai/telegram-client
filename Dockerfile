@@ -27,7 +27,6 @@ RUN mkdir /tdlib/build && \
     cmake --build . --target install -j4 && \
     echo "/usr/local/lib" >> /etc/ld.so.conf.d/tdlib.conf && \
     ldconfig
-
 # --- Приложение ---
 WORKDIR /app
 
