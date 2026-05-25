@@ -274,6 +274,13 @@ client.on("update", async (update) => {
 
 // === СТАРТ КЛИЕНТА ===
 (async () => {
+  if (process.env.RESET_SESSION === 'true') {
+  const fs = await import('fs');
+  fs.rmSync('/data/td_database', { recursive: true, force: true });
+  fs.rmSync('/data/td_files', { recursive: true, force: true });
+  console.log("🗑️ Старая сессия удалена. Убери RESET_SESSION и перезапусти.");
+  process.exit(0);
+}
   await client.connect();
   console.log("✔ Клиент подключён. Жду QR-кода...");
 })();
