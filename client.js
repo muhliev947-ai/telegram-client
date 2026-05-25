@@ -1,6 +1,10 @@
 // ============================================
 // 🔐 ВСТАВЬТЕ ВАШИ ДАННЫЕ ЗДЕСЬ (https://my.telegram.org/apps)
 // ============================================
+
+// ============================================
+// 🔐 ВСТАВЬТЕ ВАШИ ДАННЫЕ ЗДЕСЬ (https://my.telegram.org/apps)
+// ============================================
 const YOUR_API_ID = 34281403;        // ← ВСТАВЬТЕ ВАШ api_id (число)
 const YOUR_API_HASH = "8789dbd79d010bad5e08ec832c955687"; // ← ВСТАВЬТЕ ВАШ api_hash (строка в кавычках)
 // ============================================
@@ -16,7 +20,7 @@ process.on("unhandledRejection", (err) => {
   console.log("❌ Unhandled Rejection:", err);
 });
 
-process.on("uncaughtException", (err) {
+process.on("uncaughtException", (err) => {   // ← ИСПРАВЛЕНО (добавлен =>)
   console.log("❌ Uncaught Exception:", err);
 });
 
@@ -24,11 +28,13 @@ process.on("uncaughtException", (err) {
 const tdlib = new TDLib();
 
 const client = new Client(tdlib, {
-  apiId: YOUR_API_ID,           // ← теперь напрямую
-  apiHash: YOUR_API_HASH,       // ← теперь напрямую
+  apiId: YOUR_API_ID,
+  apiHash: YOUR_API_HASH,
   databaseDirectory: "/data/td_database",
   filesDirectory: "/data/td_files",
 });
+
+// ... остальная часть кода без изменений
 
 // === УМНЫЙ АВТООТВЕТЧИК ===
 function detectIntent(text) {
