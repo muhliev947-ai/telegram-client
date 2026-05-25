@@ -1,8 +1,10 @@
 FROM node:18-slim
 
-# Устанавливаем необходимые системные пакеты для установки npm-зависимостей
-# (libc6, libstdc++6, ca-certificates уже есть; добавляем curl и wget для скачивания бинарников tdl-tdlib-addon)
+# Устанавливаем Python и инструменты сборки для node-gyp
 RUN apt update && apt install -y \
+    python3 \
+    make \
+    g++ \
     curl \
     wget \
     ca-certificates \
@@ -10,14 +12,11 @@ RUN apt update && apt install -y \
 
 WORKDIR /app
 
-# Копируем package.json и package-lock.json (если есть)
+# Копируем package.json и устанавливаем зависимости
 COPY package*.json ./
-
-# Устанавливаем зависимости (без --production)
 RUN npm install
 
 # Копируем исходный код
 COPY . .
 
-# Запускаем бота
 CMD ["node", "client.js"]
