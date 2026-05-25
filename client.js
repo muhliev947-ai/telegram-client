@@ -1,3 +1,10 @@
+// ============================================
+// 🔐 ВСТАВЬТЕ ВАШИ ДАННЫЕ ЗДЕСЬ (https://my.telegram.org/apps)
+// ============================================
+const YOUR_API_ID = 34281403;        // ← ВСТАВЬТЕ ВАШ api_id (число)
+const YOUR_API_HASH = "8789dbd79d010bad5e08ec832c955687"; // ← ВСТАВЬТЕ ВАШ api_hash (строка в кавычках)
+// ============================================
+
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 
@@ -9,16 +16,16 @@ process.on("unhandledRejection", (err) => {
   console.log("❌ Unhandled Rejection:", err);
 });
 
-process.on("uncaughtException", (err) => {
+process.on("uncaughtException", (err) {
   console.log("❌ Uncaught Exception:", err);
 });
 
-// === ИНИЦИАЛИЗАЦИЯ TDLib ===
+// === ИНИЦИАЛИЗАЦИЯ TDLib с прямыми данными ===
 const tdlib = new TDLib();
 
 const client = new Client(tdlib, {
-  apiId: Number(process.env.TELEGRAM_API_ID),
-  apiHash: process.env.TELEGRAM_API_HASH,
+  apiId: YOUR_API_ID,           // ← теперь напрямую
+  apiHash: YOUR_API_HASH,       // ← теперь напрямую
   databaseDirectory: "/data/td_database",
   filesDirectory: "/data/td_files",
 });
@@ -226,8 +233,8 @@ client.on("update", async (update) => {
             use_chat_info_database: true,
             use_message_database: false,
             use_secret_chats: false,
-            api_id: Number(process.env.TELEGRAM_API_ID),
-            api_hash: process.env.TELEGRAM_API_HASH,
+            api_id: YOUR_API_ID,           // ← теперь напрямую
+            api_hash: YOUR_API_HASH,       // ← теперь напрямую
             system_language_code: "ru",
             device_model: "Railway",
             system_version: "Linux",
