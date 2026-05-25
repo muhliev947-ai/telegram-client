@@ -1,50 +1,55 @@
-FROM ubuntu:22.04
+# ============================================
+# ЭТАП 1: СБОРКА TDLib (с инструментами)
+# ============================================
+FROM ubuntu:22.04 AS tdlib-builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# --- Аргументы для переменных окружения (самое важное!) ---
-# Объявляем переменные, которые мы хотим получить извне (из Railway)
-ARG TELEGRAM_API_ID
-ARG TELEGRAM_API_HASH
-ARG RESET_SESSION
-
-# --- Превращаем ARG в ENV, чтобы они были видны запущенному приложению ---
-ENV TELEGRAM_API_ID=$TELEGRAM_API_ID
-ENV TELEGRAM_API_HASH=$TELEGRAM_API_HASH
-ENV RESET_SESSION=$RESET_SESSION
-
-# --- Системные зависимости ---
+# Устанавливаем только инструменты для сборки
 RUN apt update && apt install -y \
     git cmake g++ make zlib1g-dev libssl-dev gperf \
     pkg-config libreadline-dev libconfig++-dev \
     libtool autoconf automake python3 curl wget
 
-# --- Node.js 18 ---
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
-    apt install -y nodejs
-
-# --- TDLib ---
-RUN rm -rf /tdlib
+# Клонируем и собираем TDLib
 RUN git clone https://github.com/tdlib/td.git /tdlib
-
-RUN mkdir /tdlib/build && \
-    cd /tdlib/build && \
+RUN mkdir /tdlib/build && cd /tdlib/build && \
     cmake -DCMAKE_BUILD_TYPE=Release \
           -DTD_ENABLE_JSON=ON \
           -DTD_ENABLE_JNI=OFF \
           -DTD_ENABLE_TESTS=OFF \
           .. && \
     cmake --build . --target tdjson -j4 && \
-    cmake --build . --target install -j4 && \
-    echo "/usr/local/lib" >> /etc/ld.so.conf.d/tdlib.conf && \
-    ldconfig
+    cmake --build . --target install -j4
 
-# --- Приложение ---
+# ============================================
+# ЭТАП 2: ФИНАЛЬНЫЙ ОБРАЗ (только нужные файлы)
+# ============================================
+FROM ubuntu:22.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Копируем только скомпилированные библиотеки с этапа сборки
+COPY --from=tdlib-builder /usr/local/lib /usr/local/lib
+COPY --from=tdlib-builder /usr/local/include /usr/local/include
+
+# Настраиваем динамический линковщик
+RUN echo "/usr/local/lib" >> /etc/ld.so.conf.d/tdlib.conf && ldconfig
+
+# Устанавливаем ТОЛЬКО Node.js (без инструментов сборки)
+RUN apt update && apt install -y curl && \
+    curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt install -y nodejs && \
+    apt remove -y curl && apt autoremove -y
+
+# Очищаем кэш apt
+RUN rm -rf /var/lib/apt/lists/*
+
+# Копируем приложение
 WORKDIR /app
-
 COPY package*.json ./
-RUN npm install
-
+RUN npm install --production
 COPY . .
 
+# Запускаем бота
 CMD ["node", "client.js"]
