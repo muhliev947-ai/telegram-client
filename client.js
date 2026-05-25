@@ -15,6 +15,10 @@ const client = new Client(tdlib, {
   filesDirectory: "/data/td_files",
 });
 
+// ========== ФЛАГ ДЛЯ ОДНОКРАТНОГО ЗАПРОСА QR ==========
+let qrRequested = false;
+
+// ========== ОСТАЛЬНЫЕ ФУНКЦИИ (detectIntent, sendText) БЕЗ ИЗМЕНЕНИЙ ==========
 function detectIntent(text) {
   const t = text.toLowerCase();
   const intents = [
@@ -69,41 +73,17 @@ async function sendText(chatId, text) {
   }
 }
 
+// ========== ОБРАБОТЧИК ОБНОВЛЕНИЙ (УПРОЩЁННЫЙ) ==========
 client.on("update", async (update) => {
   if (update._ === "updateAuthorizationState") {
     const state = update.authorization_state;
     console.log("🔐 AUTH STATE:", state._);
 
-    if (state._ === "authorizationStateWaitTdlibParameters") {
-      try {
-        await client.invoke({
-          "@type": "setTdlibParameters",
-          parameters: {
-            use_test_dc: false,
-            database_directory: "/data/td_database",
-            files_directory: "/data/td_files",
-            use_file_database: true,
-            use_chat_info_database: true,
-            use_message_database: false,
-            use_secret_chats: false,
-            api_id: Number(process.env.TELEGRAM_API_ID),
-            api_hash: process.env.TELEGRAM_API_HASH,
-            system_language_code: "ru",
-            device_model: "Railway",
-            system_version: "Linux",
-            application_version: "1.0",
-            enable_storage_optimizer: true,
-            ignore_file_names: true
-          }
-        });
-      } catch (err) {
-        console.error("❌ Ошибка setTdlibParameters:", err);
-      }
-    }
-
-    if (state._ === "authorizationStateWaitPhoneNumber") {
+    // Вызываем requestQrCodeAuthentication только один раз
+    if (state._ === "authorizationStateWaitPhoneNumber" && !qrRequested) {
       console.log("📱 Запрос QR-кода...");
       await client.invoke({ "@type": "requestQrCodeAuthentication" });
+      qrRequested = true;
     }
 
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
@@ -118,6 +98,8 @@ client.on("update", async (update) => {
       console.log("✅  AUTHENTICATED — Bot is ready and listening for messages");
       console.log("✅ ============================================================");
       console.log("🤖 Агент VERTEX работает 24/7 и слушает каналы и личку...");
+      // Сбрасываем флаг на случай, если сессия сбросится
+      qrRequested = false;
     }
   }
 
@@ -132,6 +114,7 @@ client.on("update", async (update) => {
   }
 });
 
+// ========== СТАРТ ==========
 (async () => {
   if (process.env.RESET_SESSION === 'true') {
     const fs = await import('fs');
