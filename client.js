@@ -15,8 +15,19 @@ const client = new Client(tdlib, {
   filesDirectory: "/data/td_files",
 });
 
-// ========== ФЛАГ ДЛЯ ОДНОКРАТНОГО ЗАПРОСА QR ==========
 let qrRequested = false;
+let qrRefreshInterval = null;
+
+// ========== ФУНКЦИЯ ДЛЯ ЗАПРОСА QR ==========
+async function requestQR() {
+  console.log("📱 Запрос QR-кода...");
+  try {
+    await client.invoke({ "@type": "requestQrCodeAuthentication" });
+    qrRequested = true;
+  } catch (err) {
+    console.error("❌ Ошибка запроса QR:", err);
+  }
+}
 
 // ========== ОСТАЛЬНЫЕ ФУНКЦИИ (detectIntent, sendText) БЕЗ ИЗМЕНЕНИЙ ==========
 function detectIntent(text) {
@@ -73,19 +84,25 @@ async function sendText(chatId, text) {
   }
 }
 
-// ========== ОБРАБОТЧИК ОБНОВЛЕНИЙ (УПРОЩЁННЫЙ) ==========
+// ========== ОБРАБОТЧИК ОБНОВЛЕНИЙ ==========
 client.on("update", async (update) => {
   if (update._ === "updateAuthorizationState") {
     const state = update.authorization_state;
     console.log("🔐 AUTH STATE:", state._);
 
-    // Вызываем requestQrCodeAuthentication только один раз
+    // Если мы ожидаем номер телефона и ещё не запрашивали QR
     if (state._ === "authorizationStateWaitPhoneNumber" && !qrRequested) {
-      console.log("📱 Запрос QR-кода...");
-      await client.invoke({ "@type": "requestQrCodeAuthentication" });
-      qrRequested = true;
+      await requestQR();
+
+      // Запускаем интервал: каждые 120 секунд (2 минуты) перезапрашиваем QR
+      if (qrRefreshInterval) clearInterval(qrRefreshInterval);
+      qrRefreshInterval = setInterval(async () => {
+        console.log("🔄 Истёк срок действия QR-кода. Запрашиваем новый...");
+        await requestQR();
+      }, 120000); // 2 минуты
     }
 
+    // Показываем ссылку для сканирования QR
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
       console.log("🔗 ============================================================");
       console.log("🔗  SCAN THIS QR CODE LINK IN TELEGRAM (Settings → Devices):");
@@ -93,16 +110,21 @@ client.on("update", async (update) => {
       console.log("🔗 ============================================================");
     }
 
+    // Авторизация успешна
     if (state._ === "authorizationStateReady") {
+      if (qrRefreshInterval) {
+        clearInterval(qrRefreshInterval);
+        qrRefreshInterval = null;
+      }
       console.log("✅ ============================================================");
       console.log("✅  AUTHENTICATED — Bot is ready and listening for messages");
       console.log("✅ ============================================================");
       console.log("🤖 Агент VERTEX работает 24/7 и слушает каналы и личку...");
-      // Сбрасываем флаг на случай, если сессия сбросится
       qrRequested = false;
     }
   }
 
+  // Обработка новых сообщений
   if (update._ === "updateNewMessage") {
     const msg = update.message;
     if (msg.is_outgoing) return;
