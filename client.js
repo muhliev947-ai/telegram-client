@@ -19,8 +19,6 @@ const tdlib = new TDLib();
 const client = new Client(tdlib, {
   apiId: Number(process.env.TELEGRAM_API_ID),
   apiHash: process.env.TELEGRAM_API_HASH,
-
-  // Persistent storage — survives container restarts
   databaseDirectory: "/data/td_database",
   filesDirectory: "/data/td_files",
 });
@@ -30,7 +28,6 @@ function detectIntent(text) {
   const t = text.toLowerCase();
 
   const intents = [
-    // --- Приветствия и общая поддержка ---
     {
       keys: [
         "привет", "здравствуйте", "салам", "hello", "hi", "как дела",
@@ -39,7 +36,6 @@ function detectIntent(text) {
       ],
       reply: `Привет! 👋 Чем могу помочь? Напишите, что вас интересует — разработка, дизайн, боты, продвижение или что‑то другое.`
     },
-    // --- Цены и заказ ---
     {
       keys: [
         "цена", "price", "стоимость", "cost", "сколько стоит",
@@ -50,16 +46,15 @@ function detectIntent(text) {
 
 Уточните, пожалуйста, что именно вас интересует — и я сразу назову стоимость и сроки:
 
-• Сайт / лендинг / интернет‑магазин  
-• Telegram‑бот или автоматизация  
-• Дизайн, логотип, брендинг  
-• Маркетинг, SEO, продвижение  
+- Сайт / лендинг / интернет‑магазин  
+- Telegram‑бот или автоматизация  
+- Дизайн, логотип, брендинг  
+- Маркетинг, SEO, продвижение  
 
 🌐 https://next-site-self-two.vercel.app
 📱 @Fulstak_raz
       `
     },
-    // --- Веб-разработка ---
     {
       keys: [
         "сайт", "разработка", "лендинг", "магазин", "web", "веб",
@@ -73,11 +68,11 @@ function detectIntent(text) {
 
 Мы занимаемся профессиональной веб‑разработкой:
 
-• Landing page — от 1500 ₽  
-• Корпоративный сайт — от 3500 ₽  
-• Интернет‑магазин — от 6000 ₽  
-• Мобильное приложение (Flutter/React Native) — от 12 000 ₽  
-• SaaS / Dashboard — от 9000 ₽  
+- Landing page — от 1500 ₽  
+- Корпоративный сайт — от 3500 ₽  
+- Интернет‑магазин — от 6000 ₽  
+- Мобильное приложение (Flutter/React Native) — от 12 000 ₽  
+- SaaS / Dashboard — от 9000 ₽  
 
 Напишите, что именно нужно сделать и есть ли примеры — подберём стек и назовём точную цену.
 
@@ -85,7 +80,6 @@ function detectIntent(text) {
 📱 @Fulstak_raz
       `
     },
-    // --- Telegram-боты и автоматизация ---
     {
       keys: [
         "бот", "telegram bot", "телеграм бот", "автоматизация", "crm",
@@ -98,18 +92,17 @@ function detectIntent(text) {
 
 Мы создаём Telegram‑ботов и системы автоматизации:
 
-• Telegram‑бот — от 1200 ₽  
-• CRM‑интеграция — от 2500 ₽  
-• Парсер / скрейпер — от 2000 ₽  
-• Авторассылка / автопубликация — от 1500 ₽  
-• Автоматизация бизнес‑процессов — индивидуально  
+- Telegram‑бот — от 1200 ₽  
+- CRM‑интеграция — от 2500 ₽  
+- Парсер / скрейпер — от 2000 ₽  
+- Авторассылка / автопубликация — от 1500 ₽  
+- Автоматизация бизнес‑процессов — индивидуально  
 
 Расскажите, какой бот или автоматизация нужны — подскажу по стоимости и срокам.
 
 📱 @Fulstak_raz
       `
     },
-    // --- Дизайн ---
     {
       keys: [
         "дизайн", "ui", "ux", "логотип", "брендинг", "графика",
@@ -122,18 +115,17 @@ function detectIntent(text) {
 
 Мы делаем дизайн и брендинг:
 
-• Логотип — от 1000 ₽  
-• UI/UX дизайн сайта или приложения — от 2000 ₽  
-• Брендинг / фирменный стиль — от 3000 ₽  
-• Баннер, флаер, презентация — от 500 ₽  
-• Иконки и иллюстрации — от 800 ₽  
+- Логотип — от 1000 ₽  
+- UI/UX дизайн сайта или приложения — от 2000 ₽  
+- Брендинг / фирменный стиль — от 3000 ₽  
+- Баннер, флаер, презентация — от 500 ₽  
+- Иконки и иллюстрации — от 800 ₽  
 
 Пришлите примеры, которые вам нравятся — подберём стиль и назовём точную цену.
 
 📱 @Fulstak_raz
       `
     },
-    // --- Маркетинг и SEO ---
     {
       keys: [
         "маркетинг", "seo", "продвижение", "реклама", "ads",
@@ -147,11 +139,11 @@ function detectIntent(text) {
 
 Мы занимаемся маркетингом и продвижением:
 
-• SEO‑оптимизация — от 3000 ₽/мес  
-• Таргетированная реклама (VK, Instagram, TikTok) — от 2000 ₽/мес  
-• SMM‑ведение — от 4000 ₽/мес  
-• Копирайтинг / статьи — от 500 ₽/шт  
-• Email‑рассылки — от 1500 ₽  
+- SEO‑оптимизация — от 3000 ₽/мес  
+- Таргетированная реклама (VK, Instagram, TikTok) — от 2000 ₽/мес  
+- SMM‑ведение — от 4000 ₽/мес  
+- Копирайтинг / статьи — от 500 ₽/шт  
+- Email‑рассылки — от 1500 ₽  
 
 Расскажите о вашем проекте — подберём стратегию и назовём стоимость.
 
@@ -159,7 +151,6 @@ function detectIntent(text) {
 📱 @Fulstak_raz
       `
     },
-    // --- Консалтинг и стратегия ---
     {
       keys: [
         "консультация", "консультирование", "стратегия", "strategy",
@@ -172,10 +163,10 @@ function detectIntent(text) {
 
 Мы предоставляем консалтинг и стратегическое сопровождение:
 
-• Бизнес‑консультация — от 1500 ₽/час  
-• Аудит сайта / рекламы — от 2000 ₽  
-• Разработка стратегии продвижения — от 5000 ₽  
-• Аналитика и оптимизация — индивидуально  
+- Бизнес‑консультация — от 1500 ₽/час  
+- Аудит сайта / рекламы — от 2000 ₽  
+- Разработка стратегии продвижения — от 5000 ₽  
+- Аналитика и оптимизация — индивидуально  
 
 Опишите вашу задачу — обсудим и предложим решение.
 
@@ -210,7 +201,6 @@ async function sendText(chatId, text) {
         text: { "@type": "formattedText", text },
       },
     });
-
     console.log(`📤 Отправлено сообщение в чат ${chatId}`);
   } catch (err) {
     console.log("❌ Ошибка отправки сообщения:", err);
@@ -223,7 +213,6 @@ client.on("update", async (update) => {
     const state = update.authorization_state;
     console.log("🔐 AUTH STATE:", state._);
 
-    // === ОПТИМИЗИРОВАННЫЙ TDLib CONFIG С TRY/CATCH ===
     if (state._ === "authorizationStateWaitTdlibParameters") {
       try {
         await client.invoke({
@@ -231,23 +220,18 @@ client.on("update", async (update) => {
           parameters: {
             "@type": "tdlibParameters",
             use_test_dc: false,
-
             database_directory: "/data/td_database",
             files_directory: "/data/td_files",
-
             use_file_database: true,
             use_chat_info_database: true,
             use_message_database: false,
             use_secret_chats: false,
-
             api_id: Number(process.env.TELEGRAM_API_ID),
             api_hash: process.env.TELEGRAM_API_HASH,
-
             system_language_code: "ru",
             device_model: "Railway",
             system_version: "Linux",
             application_version: "1.0",
-
             enable_storage_optimizer: true,
             ignore_file_names: true
           }
@@ -257,7 +241,7 @@ client.on("update", async (update) => {
       }
     }
 
-    // === QR-КОД ===
+    // === QR-КОД (единственный метод входа) ===
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
       console.log("🔗 ============================================================");
       console.log("🔗  SCAN THIS QR CODE LINK IN TELEGRAM (Settings → Devices):");
@@ -265,63 +249,6 @@ client.on("update", async (update) => {
       console.log("🔗 ============================================================");
     }
 
-    // === НОМЕР ТЕЛЕФОНА ===
-    if (state._ === "authorizationStateWaitPhoneNumber") {
-      const phone = process.env.TELEGRAM_PHONE;
-      if (!phone) {
-        console.log("📱 Auth requires a phone number. Set the TELEGRAM_PHONE environment variable and restart.");
-        return;
-      }
-      console.log(`📱 Sending phone number: ${phone}`);
-      try {
-        await client.invoke({
-          "@type": "setAuthenticationPhoneNumber",
-          phone_number: phone,
-        });
-      } catch (err) {
-        console.log("❌ Ошибка setAuthenticationPhoneNumber:", err);
-      }
-    }
-
-    // === КОД ПОДТВЕРЖДЕНИЯ ===
-    if (state._ === "authorizationStateWaitCode") {
-      const code = process.env.TELEGRAM_CODE;
-      if (!code) {
-        console.log("🔑 Auth requires the confirmation code sent to your Telegram app.");
-        console.log("🔑 Set the TELEGRAM_CODE environment variable and restart.");
-        return;
-      }
-      console.log(`🔑 Sending authentication code: ${code}`);
-      try {
-        await client.invoke({
-          "@type": "checkAuthenticationCode",
-          code: code,
-        });
-      } catch (err) {
-        console.log("❌ Ошибка checkAuthenticationCode:", err);
-      }
-    }
-
-    // === ПАРОЛЬ 2FA ===
-    if (state._ === "authorizationStateWaitPassword") {
-      const password = process.env.TELEGRAM_PASSWORD;
-      if (!password) {
-        console.log("🔒 Auth requires your 2FA cloud password.");
-        console.log("🔒 Set the TELEGRAM_PASSWORD environment variable and restart.");
-        return;
-      }
-      console.log("🔒 Sending 2FA password...");
-      try {
-        await client.invoke({
-          "@type": "checkAuthenticationPassword",
-          password: password,
-        });
-      } catch (err) {
-        console.log("❌ Ошибка checkAuthenticationPassword:", err);
-      }
-    }
-
-    // === ГОТОВО ===
     if (state._ === "authorizationStateReady") {
       console.log("✅ ============================================================");
       console.log("✅  AUTHENTICATED — Bot is ready and listening for messages");
@@ -333,8 +260,6 @@ client.on("update", async (update) => {
   // === НОВЫЕ СООБЩЕНИЯ ===
   if (update._ === "updateNewMessage") {
     const msg = update.message;
-
-    // Пропускаем исходящие сообщения самого бота
     if (msg.is_outgoing) return;
 
     const text = msg?.content?.text?.text || "";
@@ -350,5 +275,5 @@ client.on("update", async (update) => {
 // === СТАРТ КЛИЕНТА ===
 (async () => {
   await client.connect();
-  console.log("✔ Клиент подключён. Жду QR или сообщения...");
+  console.log("✔ Клиент подключён. Жду QR-кода...");
 })();
