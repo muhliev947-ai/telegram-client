@@ -1,90 +1,29 @@
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
-import fs from "fs";
 
-console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.1 (Smart Reply) ===");
+// === ЛОГИ СТАРТА ===
+console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.2 (Optimized TDLib) ===");
+console.log("⏳ Запуск клиента...");
 
-// Очистка базы по запросу
-if (process.env.RESET_AUTH === "true") {
-  console.log("⚠ RESET_AUTH=true → очищаю TDLib базу...");
-  try {
-    fs.rmSync("_td_database", { recursive: true, force: true });
-    console.log("✔ База очищена");
-  } catch (err) {
-    console.log("❌ Ошибка удаления базы:", err.message);
-  }
-}
-
-// Инициализация TDLib
+// === ИНИЦИАЛИЗАЦИЯ TDLib ===
 const tdlib = new TDLib();
 
-// Создаём клиент
 const client = new Client(tdlib, {
   apiId: Number(process.env.TELEGRAM_API_ID),
   apiHash: process.env.TELEGRAM_API_HASH,
-  databaseDirectory: "_td_database",
-  filesDirectory: "_td_files",
+
+  // Храним базу в RAM → не переполняется, не ломается
+  databaseDirectory: "/tmp/td_database",
+  filesDirectory: "/tmp/td_files",
 });
 
-// ====== КОНФИГ АГЕНТА ======
-
-// Ключевые слова для каналов
-const keywords = [
-  "сайт", "сайты", "разработка", "разработчик",
-  "бот", "боты", "telegram bot", "телеграм бот",
-  "веб", "web", "frontend", "backend",
-  "дизайн", "ui", "ux",
-  "seo", "реклама", "продвижение", "лендинг"
-];
-
-// (опционально) Белый список каналов, где можно отвечать
-// Если не хочешь фильтр — оставь массив пустым или закомментируй проверку
-const allowedChannels = [
-  // -1001234567890,
-  // -1009876543210,
-];
-
-const VERTEX_MESSAGE = `
-💼 *Услуги и цены VERTEX*
-
-🖥 *Веб‑разработка*
-• Landing page — от *1500 ₽*
-• Корпоративный сайт — от *3500 ₽*
-• Интернет‑магазин — от *6000 ₽*
-• SaaS / Dashboard — от *9000 ₽*
-
-🎨 *Дизайн и брендинг*
-• Логотип и фирменный стиль — от *1000 ₽*
-• UI/UX дизайн — от *2000 ₽*
-
-📈 *Продвижение*
-• SEO — от *1500 ₽*
-• Контекстная реклама — от *2000 ₽*
-
-🤖 *Автоматизация*
-• Telegram‑бот — от *1200 ₽*
-• CRM‑интеграция — от *2500 ₽*
-
-⚡️ *Скидка 10% на первый проект!*
-
-🌐 https://next-site-self-two.vercel.app
-📱 Telegram: @Fulstak_raz
-📧 Email: vertexsite07@gmail.com
-📞 Телефон: +7 928 092‑2250
-`;
-
-// Антиспам: чтобы не отвечать дважды на один и тот же пост
-const answeredMessages = new Set();
-
-// ====== УМНЫЙ АВТООТВЕТЧИК ДЛЯ ЛИЧКИ ======
-
+// === УМНЫЙ АВТООТВЕТЧИК ===
 function detectIntent(text) {
-  const t = (text || "").toLowerCase();
+  const t = text.toLowerCase();
 
   const intents = [
     {
-      name: "website",
-      keys: ["сайт", "сайты", "разработка", "лендинг", "магазин", "web", "веб", "верстка", "frontend", "backend"],
+      keys: ["сайт", "разработка", "лендинг", "магазин", "web", "веб"],
       reply: `
 Здравствуйте! 👋
 
@@ -95,7 +34,6 @@ function detectIntent(text) {
 • Интернет‑магазин — от 6000 ₽  
 • SaaS / Dashboard — от 9000 ₽  
 
-Готовы обсудить ваш проект.  
 Напишите, пожалуйста, что именно нужно сделать и есть ли примеры.
 
 🌐 https://next-site-self-two.vercel.app
@@ -103,8 +41,7 @@ function detectIntent(text) {
       `
     },
     {
-      name: "bot",
-      keys: ["бот", "боты", "telegram bot", "телеграм бот", "автоматизация", "crm", "интеграция"],
+      keys: ["бот", "telegram bot", "телеграм бот", "автоматизация", "crm"],
       reply: `
 Здравствуйте! 🤖
 
@@ -120,8 +57,7 @@ function detectIntent(text) {
       `
     },
     {
-      name: "design",
-      keys: ["дизайн", "ui", "ux", "логотип", "фирменный стиль", "макет"],
+      keys: ["дизайн", "ui", "ux", "логотип"],
       reply: `
 Здравствуйте! 🎨
 
@@ -129,7 +65,6 @@ function detectIntent(text) {
 
 • Логотип — от 1000 ₽  
 • UI/UX дизайн — от 2000 ₽  
-• Фирменный стиль — индивидуально  
 
 Пришлите примеры, которые вам нравятся — подберём стиль.
 
@@ -137,34 +72,13 @@ function detectIntent(text) {
       `
     },
     {
-      name: "marketing",
-      keys: ["seo", "реклама", "продвижение", "контекст"],
-      reply: `
-Здравствуйте! 📈
-
-Мы занимаемся продвижением:
-
-• SEO — от 1500 ₽  
-• Контекстная реклама — от 2000 ₽  
-
-Напишите, какой проект нужно продвигать — я подскажу стратегию.
-
-📱 @Fulstak_raz
-      `
-    },
-    {
-      name: "hello",
-      keys: ["привет", "здравствуйте", "салам", "hello", "hi", "хай"],
-      reply: `
-Привет! 👋  
-Я агент VERTEX. Чем могу помочь?`
+      keys: ["привет", "здравствуйте", "салам", "hello", "hi"],
+      reply: `Привет! 👋 Чем могу помочь?`
     }
   ];
 
   for (const intent of intents) {
-    if (intent.keys.some(k => t.includes(k))) {
-      return intent.reply;
-    }
+    if (intent.keys.some(k => t.includes(k))) return intent.reply;
   }
 
   return `
@@ -178,102 +92,7 @@ function detectIntent(text) {
   `;
 }
 
-// ====== ОБРАБОТКА ОБНОВЛЕНИЙ ======
-
-client.on("error", (err) => console.error("❌ TDLib ERROR:", err));
-
-client.on("update", async (update) => {
-  if (Array.isArray(update)) {
-    for (const item of update) await handleUpdate(item);
-    return;
-  }
-  await handleUpdate(update);
-});
-
-async function handleUpdate(update) {
-  const type = update._;
-
-  // Авторизация
-  if (type === "updateAuthorizationState") {
-    const state = update.authorization_state;
-    const stateType = state._;
-
-    console.log("🔐 AUTH STATE:", stateType);
-
-    if (stateType === "authorizationStateWaitPhoneNumber") {
-      console.log("📲 Запрошен номер → переключаюсь на QR...");
-      await client.invoke({ "@type": "requestQrCodeAuthentication" });
-    }
-
-    if (stateType === "authorizationStateWaitOtherDeviceConfirmation") {
-      console.log("🔗 === QR LINK ===");
-      console.log(state.link);
-    }
-
-    if (stateType === "authorizationStateReady") {
-      console.log("🎉 === AUTH OK — АГЕНТ ГОТОВ ===");
-      startAgent();
-    }
-  }
-
-  // Новые сообщения
-  if (type === "updateNewMessage") {
-    const msg = update.message;
-
-    if (msg.is_channel_post) {
-      await onChannelMessage(msg);
-    } else {
-      await onPrivateMessage(msg);
-    }
-  }
-}
-
-// ====== ЛОГИКА АГЕНТА ======
-
-function startAgent() {
-  console.log("🤖 Агент VERTEX работает 24/7 и слушает каналы и личку...");
-}
-
-// Сообщения из каналов
-async function onChannelMessage(msg) {
-  const chatId = msg.chat_id;
-
-  // Фильтр каналов (если список не пустой)
-  if (allowedChannels.length > 0 && !allowedChannels.includes(chatId)) {
-    console.log("⛔ Канал не в списке разрешённых — пропускаю");
-    return;
-  }
-
-  const text = msg?.content?.text?.text?.toLowerCase() || "";
-  const messageId = msg.id;
-
-  console.log(`📡 Канал → ${text}`);
-
-  // Антиспам
-  if (answeredMessages.has(messageId)) return;
-  answeredMessages.add(messageId);
-
-  // Проверка ключевых слов
-  if (keywords.some(k => text.includes(k))) {
-    console.log("🎯 Найдено ключевое слово → отправляю VERTEX сообщение");
-    await sendText(chatId, VERTEX_MESSAGE);
-  }
-}
-
-// Личные сообщения
-async function onPrivateMessage(msg) {
-  const text = msg?.content?.text?.text || "";
-  const chatId = msg.chat_id;
-
-  if (!text) return;
-
-  console.log(`💬 Личка → ${text}`);
-
-  const reply = detectIntent(text);
-  await sendText(chatId, reply);
-}
-
-// Отправка сообщений (с защитой от падений)
+// === ОТПРАВКА СООБЩЕНИЙ ===
 async function sendText(chatId, text) {
   try {
     await client.invoke({
@@ -291,9 +110,72 @@ async function sendText(chatId, text) {
   }
 }
 
-// Запуск клиента
+// === ОБРАБОТКА ОБНОВЛЕНИЙ ===
+client.on("update", async (update) => {
+  if (update._ === "updateAuthorizationState") {
+    const state = update.authorization_state;
+    console.log("🔐 AUTH STATE:", state._);
+
+    // === ОПТИМИЗИРОВАННЫЙ TDLib CONFIG ===
+    if (state._ === "authorizationStateWaitTdlibParameters") {
+      await client.invoke({
+        "@type": "setTdlibParameters",
+        parameters: {
+          "@type": "tdlibParameters",
+          use_test_dc: false,
+
+          // Храним всё в RAM → не переполняется
+          database_directory: "/tmp/td_database",
+          files_directory: "/tmp/td_files",
+
+          // Отключаем всё, что создаёт огромные binlog
+          use_file_database: false,
+          use_chat_info_database: false,
+          use_message_database: false,
+          use_secret_chats: false,
+
+          api_id: Number(process.env.TELEGRAM_API_ID),
+          api_hash: process.env.TELEGRAM_API_HASH,
+
+          system_language_code: "ru",
+          device_model: "Railway",
+          system_version: "Linux",
+          application_version: "1.0",
+
+          enable_storage_optimizer: true,
+          ignore_file_names: true
+        }
+      });
+    }
+
+    // === QR-КОД ===
+    if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
+      console.log("🔗 === QR LINK ===");
+      console.log(state.link);
+    }
+
+    // === ГОТОВО ===
+    if (state._ === "authorizationStateReady") {
+      console.log("🎉 === AUTH OK — АГЕНТ ГОТОВ ===");
+      console.log("🤖 Агент VERTEX работает 24/7 и слушает каналы и личку...");
+    }
+  }
+
+  // === НОВЫЕ СООБЩЕНИЯ ===
+  if (update._ === "updateNewMessage") {
+    const msg = update.message;
+    const text = msg?.content?.text?.text || "";
+    const chatId = msg.chat_id;
+
+    console.log(`💬 Личка → ${text}`);
+
+    const reply = detectIntent(text);
+    await sendText(chatId, reply);
+  }
+});
+
+// === СТАРТ КЛИЕНТА ===
 (async () => {
-  console.log("⏳ Запуск клиента...");
   await client.connect();
   console.log("✔ Клиент подключён. Жду QR или сообщения...");
 })();
