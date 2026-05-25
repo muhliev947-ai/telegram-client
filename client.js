@@ -1,3 +1,14 @@
+// ========== ДИАГНОСТИКА ПЕРЕМЕННЫХ ==========
+console.log("=== DIAGNOSTICS ===");
+console.log("TELEGRAM_API_ID:", process.env.34281403);
+console.log("TELEGRAM_API_HASH:", process.env.8789dbd79d010bad5e08ec832c955687 ? "***present***" : "MISSING");
+console.log("RESET_SESSION:", process.env.RESET_SESSION);
+console.log("All env keys:", Object.keys(process.env).join(", "));
+console.log("===================");
+// ============================================
+
+
+
 // ============================================
 // 🔐 ВСТАВЬТЕ ВАШИ ДАННЫЕ ЗДЕСЬ (https://my.telegram.org/apps)
 // ============================================
