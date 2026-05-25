@@ -1,5 +1,5 @@
 # ============================================
-# ЭТАП 1: СБОРКА TDLib
+# ЭТАП 1: СБОРКА TDLib (требует много инструментов)
 # ============================================
 FROM ubuntu:22.04 AS tdlib-builder
 
@@ -26,17 +26,19 @@ RUN mkdir /tdlib/build && cd /tdlib/build && \
 # ============================================
 FROM node:18-slim
 
-# Копируем скомпилированные библиотеки TDLib
+# Устанавливаем Python и инструменты сборки для node-gyp
+RUN apt update && apt install -y \
+    python3 \
+    make \
+    g++ \
+    && rm -rf /var/lib/apt/lists/*
+
+# Копируем скомпилированную библиотеку TDLib
 COPY --from=tdlib-builder /usr/local/lib /usr/local/lib
 RUN echo "/usr/local/lib" >> /etc/ld.so.conf.d/tdlib.conf && ldconfig
 
 WORKDIR /app
-
-# Копируем package.json и устанавливаем зависимости
 COPY package*.json ./
 RUN npm install
-
-# Копируем исходный код бота
 COPY . .
-
 CMD ["node", "client.js"]
