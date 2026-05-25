@@ -4,7 +4,6 @@ import { TDLib } from "tdl-tdlib-addon";
 console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.3 (Stable TDLib) ===");
 console.log("⏳ Запуск клиента...");
 
-// === ГЛОБАЛЬНАЯ ЗАЩИТА ОТ ПАДЕНИЙ ===
 process.on("unhandledRejection", (err) => {
   console.error("❌ Unhandled Rejection:", err);
 });
@@ -12,7 +11,7 @@ process.on("uncaughtException", (err) => {
   console.error("❌ Uncaught Exception:", err);
 });
 
-// === ИНИЦИАЛИЗАЦИЯ TDLib ===
+// === ИНИЦИАЛИЗАЦИЯ TDLib (ПАРАМЕТРЫ ТОЛЬКО ЗДЕСЬ) ===
 const tdlib = new TDLib();
 const client = new Client(tdlib, {
   apiId: Number(process.env.TELEGRAM_API_ID),
@@ -21,7 +20,7 @@ const client = new Client(tdlib, {
   filesDirectory: "/data/td_files",
 });
 
-// === ИНТЕНТЫ ОТВЕТОВ ===
+// === ИНТЕНТЫ ОТВЕТОВ (без изменений) ===
 function detectIntent(text) {
   const t = text.toLowerCase();
   const intents = [
@@ -60,7 +59,6 @@ function detectIntent(text) {
   return `Здравствуйте! 👋\n\nГотов помочь вам с разработкой, дизайном, ботами или продвижением.\nНапишите, пожалуйста, что именно вам нужно — и я подскажу по стоимости и срокам.\n\n🌐 https://next-site-self-two.vercel.app\n📱 @Fulstak_raz`;
 }
 
-// === ОТПРАВКА СООБЩЕНИЙ ===
 async function sendText(chatId, text) {
   try {
     await client.invoke({
@@ -77,40 +75,13 @@ async function sendText(chatId, text) {
   }
 }
 
-// === ОБРАБОТКА ОБНОВЛЕНИЙ ===
+// === ОБРАБОТКА ОБНОВЛЕНИЙ (БЕЗ ВТОРИЧНОГО setTdlibParameters) ===
 client.on("update", async (update) => {
   if (update._ === "updateAuthorizationState") {
     const state = update.authorization_state;
     console.log("🔐 AUTH STATE:", state._);
 
-    if (state._ === "authorizationStateWaitTdlibParameters") {
-      try {
-        await client.invoke({
-          "@type": "setTdlibParameters",
-          parameters: {
-            "@type": "tdlibParameters",
-            use_test_dc: false,
-            database_directory: "/data/td_database",
-            files_directory: "/data/td_files",
-            use_file_database: true,
-            use_chat_info_database: true,
-            use_message_database: false,
-            use_secret_chats: false,
-            api_id: Number(process.env.TELEGRAM_API_ID),
-            api_hash: process.env.TELEGRAM_API_HASH,
-            system_language_code: "ru",
-            device_model: "Railway",
-            system_version: "Linux",
-            application_version: "1.0",
-            enable_storage_optimizer: true,
-            ignore_file_names: true
-          }
-        });
-      } catch (err) {
-        console.error("❌ Ошибка setTdlibParameters:", err);
-      }
-    }
-
+    // QR-код — единственный способ входа (без номера телефона)
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
       console.log("🔗 ============================================================");
       console.log("🔗  SCAN THIS QR CODE LINK IN TELEGRAM (Settings → Devices):");
