@@ -174,9 +174,24 @@ client.on("update", async (update) => {
   // === НОВЫЕ СООБЩЕНИЯ ===
   if (update._ === "updateNewMessage") {
     const msg = update.message;
-    const text = msg?.content?.text?.text || "";
+
+    // Пропускаем исходящие сообщения (отправленные самим ботом)
+    if (msg.is_outgoing) return;
+
     const chatId = msg.chat_id;
 
+    // Проверяем, что чат является личной перепиской (не канал и не группа)
+    let chat;
+    try {
+      chat = await client.invoke({ "@type": "getChat", chat_id: chatId });
+    } catch (err) {
+      console.log("❌ Ошибка получения чата:", err);
+      return;
+    }
+
+    if (chat?.type?._ !== "chatTypePrivate") return;
+
+    const text = msg?.content?.text?.text || "";
     console.log(`💬 Личка → ${text}`);
 
     const reply = detectIntent(text);
