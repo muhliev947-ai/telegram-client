@@ -1,9 +1,17 @@
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
 
-// === ЛОГИ СТАРТА ===
-console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.2 (Optimized TDLib) ===");
+console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.3 (Stable TDLib) ===");
 console.log("⏳ Запуск клиента...");
+
+// === ГЛОБАЛЬНАЯ ЗАЩИТА ОТ ПАДЕНИЙ ===
+process.on("unhandledRejection", (err) => {
+  console.log("❌ Unhandled Rejection:", err);
+});
+
+process.on("uncaughtException", (err) => {
+  console.log("❌ Uncaught Exception:", err);
+});
 
 // === ИНИЦИАЛИЗАЦИЯ TDLib ===
 const tdlib = new TDLib();
@@ -116,36 +124,38 @@ client.on("update", async (update) => {
     const state = update.authorization_state;
     console.log("🔐 AUTH STATE:", state._);
 
-    // === ОПТИМИЗИРОВАННЫЙ TDLib CONFIG ===
+    // === ОПТИМИЗИРОВАННЫЙ TDLib CONFIG С TRY/CATCH ===
     if (state._ === "authorizationStateWaitTdlibParameters") {
-      await client.invoke({
-        "@type": "setTdlibParameters",
-        parameters: {
-          "@type": "tdlibParameters",
-          use_test_dc: false,
+      try {
+        await client.invoke({
+          "@type": "setTdlibParameters",
+          parameters: {
+            "@type": "tdlibParameters",
+            use_test_dc: false,
 
-          // Храним всё в RAM → не переполняется
-          database_directory: "/tmp/td_database",
-          files_directory: "/tmp/td_files",
+            database_directory: "/tmp/td_database",
+            files_directory: "/tmp/td_files",
 
-          // Отключаем всё, что создаёт огромные binlog
-          use_file_database: false,
-          use_chat_info_database: false,
-          use_message_database: false,
-          use_secret_chats: false,
+            use_file_database: false,
+            use_chat_info_database: false,
+            use_message_database: false,
+            use_secret_chats: false,
 
-          api_id: Number(process.env.TELEGRAM_API_ID),
-          api_hash: process.env.TELEGRAM_API_HASH,
+            api_id: Number(process.env.TELEGRAM_API_ID),
+            api_hash: process.env.TELEGRAM_API_HASH,
 
-          system_language_code: "ru",
-          device_model: "Railway",
-          system_version: "Linux",
-          application_version: "1.0",
+            system_language_code: "ru",
+            device_model: "Railway",
+            system_version: "Linux",
+            application_version: "1.0",
 
-          enable_storage_optimizer: true,
-          ignore_file_names: true
-        }
-      });
+            enable_storage_optimizer: true,
+            ignore_file_names: true
+          }
+        });
+      } catch (err) {
+        console.log("❌ Ошибка setTdlibParameters:", err);
+      }
     }
 
     // === QR-КОД ===
