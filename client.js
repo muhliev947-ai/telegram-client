@@ -1,265 +1,63 @@
-// ============================================
-// 🔐 ВСТАВЬТЕ ВАШИ ДАННЫЕ ЗДЕСЬ (https://my.telegram.org/apps)
-// ============================================
-
-const YOUR_API_ID = 34281403;        // ← ВСТАВЬТЕ ВАШ api_id (число)
-const YOUR_API_HASH = "8789dbd79d010bad5e08ec832c955687"; // ← ВСТАВЬТЕ ВАШ api_hash (строка в кавычках)
-
-// ============================================
-
 import { Client } from "tdl";
 import { TDLib } from "tdl-tdlib-addon";
-import fs from "fs";
 
 console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.3 (Stable TDLib) ===");
 console.log("⏳ Запуск клиента...");
 
 // === ГЛОБАЛЬНАЯ ЗАЩИТА ОТ ПАДЕНИЙ ===
 process.on("unhandledRejection", (err) => {
-  console.log("❌ Unhandled Rejection:", err);
+  console.error("❌ Unhandled Rejection:", err);
 });
-
 process.on("uncaughtException", (err) => {
-  console.log("❌ Uncaught Exception:", err);
+  console.error("❌ Uncaught Exception:", err);
 });
 
-// === ИНИЦИАЛИЗАЦИЯ TDLib с прямыми данными ===
+// === ИНИЦИАЛИЗАЦИЯ TDLib ===
 const tdlib = new TDLib();
 const client = new Client(tdlib, {
-  apiId: YOUR_API_ID,
-  apiHash: YOUR_API_HASH,
+  apiId: Number(process.env.TELEGRAM_API_ID),
+  apiHash: process.env.TELEGRAM_API_HASH,
   databaseDirectory: "/data/td_database",
   filesDirectory: "/data/td_files",
 });
 
-// === УМНЫЙ АВТООТВЕТЧИК ===
+// === ИНТЕНТЫ ОТВЕТОВ ===
 function detectIntent(text) {
   const t = text.toLowerCase();
   const intents = [
     {
-      keys: [
-        "привет",
-        "здравствуйте",
-        "салам",
-        "hello",
-        "hi",
-        "как дела",
-        "что нового",
-        "помощь",
-        "help",
-        "поддержка",
-        "support",
-        "вопрос",
-        "question",
-        "информация",
-        "info"
-      ],
+      keys: ["привет", "здравствуйте", "салам", "hello", "hi", "как дела", "что нового", "помощь", "help", "поддержка", "support", "вопрос", "question", "информация", "info"],
       reply: `Привет! 👋 Чем могу помочь? Напишите, что вас интересует — разработка, дизайн, боты, продвижение или что‑то другое.`
     },
     {
-      keys: [
-        "цена",
-        "price",
-        "стоимость",
-        "cost",
-        "сколько стоит",
-        "как заказать",
-        "order",
-        "заказ",
-        "контакты",
-        "contacts"
-      ],
-      reply: ` Здравствуйте! 💬 Уточните, пожалуйста, что именно вас интересует — и я сразу назову стоимость и сроки:
-- Сайт / лендинг / интернет‑магазин
-- Telegram‑бот или автоматизация
-- Дизайн, логотип, брендинг
-- Маркетинг, SEO, продвижение
-
-🌐 https://next-site-self-two.vercel.app
-📱 @Fulstak_raz `
+      keys: ["цена", "price", "стоимость", "cost", "сколько стоит", "как заказать", "order", "заказ", "контакты", "contacts"],
+      reply: `Здравствуйте! 💬 Уточните, пожалуйста, что именно вас интересует — и я сразу назову стоимость и сроки:\n\n- Сайт / лендинг / интернет‑магазин\n- Telegram‑бот или автоматизация\n- Дизайн, логотип, брендинг\n- Маркетинг, SEO, продвижение\n\n🌐 https://next-site-self-two.vercel.app\n📱 @Fulstak_raz`
     },
     {
-      keys: [
-        "сайт",
-        "разработка",
-        "лендинг",
-        "магазин",
-        "web",
-        "веб",
-        "сайтик",
-        "веб-сайт",
-        "интернет-магазин",
-        "e-commerce",
-        "ecommerce",
-        "онлайн-магазин",
-        "портал",
-        "приложение",
-        "app",
-        "мобильное приложение",
-        "мобилка",
-        "ios",
-        "android",
-        "flutter",
-        "react",
-        "vue",
-        "angular",
-        "next.js",
-        "nuxt",
-        "svelte"
-      ],
-      reply: ` Здравствуйте! 👋 Мы занимаемся профессиональной веб‑разработкой:
-- Landing page — от 1500 ₽
-- Корпоративный сайт — от 3500 ₽
-- Интернет‑магазин — от 6000 ₽
-- Мобильное приложение (Flutter/React Native) — от 12 000 ₽
-- SaaS / Dashboard — от 9000 ₽
-
-Напишите, что именно нужно сделать и есть ли примеры — подберём стек и назовём точную цену.
-
-🌐 https://next-site-self-two.vercel.app
-📱 @Fulstak_raz `
+      keys: ["сайт", "разработка", "лендинг", "магазин", "web", "веб", "сайтик", "веб-сайт", "интернет-магазин", "e-commerce", "ecommerce", "онлайн-магазин", "портал", "приложение", "app", "мобильное приложение", "мобилка", "ios", "android", "flutter", "react", "vue", "angular", "next.js", "nuxt", "svelte"],
+      reply: `Здравствуйте! 👋 Мы занимаемся профессиональной веб‑разработкой:\n\n- Landing page — от 1500 ₽\n- Корпоративный сайт — от 3500 ₽\n- Интернет‑магазин — от 6000 ₽\n- Мобильное приложение (Flutter/React Native) — от 12 000 ₽\n- SaaS / Dashboard — от 9000 ₽\n\nНапишите, что именно нужно сделать и есть ли примеры — подберём стек и назовём точную цену.\n\n🌐 https://next-site-self-two.vercel.app\n📱 @Fulstak_raz`
     },
     {
-      keys: [
-        "бот",
-        "telegram bot",
-        "телеграм бот",
-        "автоматизация",
-        "crm",
-        "бот для телеграма",
-        "telegram",
-        "tg",
-        "автоответчик",
-        "парсер",
-        "скрейпер",
-        "scraper",
-        "parser",
-        "автопост",
-        "автопубликация",
-        "рассылка",
-        "mailing",
-        "newsletter"
-      ],
-      reply: ` Здравствуйте! 🤖 Мы создаём Telegram‑ботов и системы автоматизации:
-- Telegram‑бот — от 1200 ₽
-- CRM‑интеграция — от 2500 ₽
-- Парсер / скрейпер — от 2000 ₽
-- Авторассылка / автопубликация — от 1500 ₽
-- Автоматизация бизнес‑процессов — индивидуально
-
-Расскажите, какой бот или автоматизация нужны — подскажу по стоимости и срокам.
-
-📱 @Fulstak_raz `
+      keys: ["бот", "telegram bot", "телеграм бот", "автоматизация", "crm", "бот для телеграма", "telegram", "tg", "автоответчик", "парсер", "скрейпер", "scraper", "parser", "автопост", "автопубликация", "рассылка", "mailing", "newsletter"],
+      reply: `Здравствуйте! 🤖 Мы создаём Telegram‑ботов и системы автоматизации:\n\n- Telegram‑бот — от 1200 ₽\n- CRM‑интеграция — от 2500 ₽\n- Парсер / скрейпер — от 2000 ₽\n- Авторассылка / автопубликация — от 1500 ₽\n- Автоматизация бизнес‑процессов — индивидуально\n\nРасскажите, какой бот или автоматизация нужны — подскажу по стоимости и срокам.\n\n📱 @Fulstak_raz`
     },
     {
-      keys: [
-        "дизайн",
-        "ui",
-        "ux",
-        "логотип",
-        "брендинг",
-        "графика",
-        "иллюстрация",
-        "макет",
-        "mockup",
-        "прототип",
-        "prototype",
-        "веб-дизайн",
-        "мобильный дизайн",
-        "иконки",
-        "icons",
-        "баннер",
-        "poster",
-        "флаер",
-        "flyer",
-        "презентация",
-        "presentation"
-      ],
-      reply: ` Здравствуйте! 🎨 Мы делаем дизайн и брендинг:
-- Логотип — от 1000 ₽
-- UI/UX дизайн сайта или приложения — от 2000 ₽
-- Брендинг / фирменный стиль — от 3000 ₽
-- Баннер, флаер, презентация — от 500 ₽
-- Иконки и иллюстрации — от 800 ₽
-
-Пришлите примеры, которые вам нравятся — подберём стиль и назовём точную цену.
-
-📱 @Fulstak_raz `
+      keys: ["дизайн", "ui", "ux", "логотип", "брендинг", "графика", "иллюстрация", "макет", "mockup", "прототип", "prototype", "веб-дизайн", "мобильный дизайн", "иконки", "icons", "баннер", "poster", "флаер", "flyer", "презентация", "presentation"],
+      reply: `Здравствуйте! 🎨 Мы делаем дизайн и брендинг:\n\n- Логотип — от 1000 ₽\n- UI/UX дизайн сайта или приложения — от 2000 ₽\n- Брендинг / фирменный стиль — от 3000 ₽\n- Баннер, флаер, презентация — от 500 ₽\n- Иконки и иллюстрации — от 800 ₽\n\nПришлите примеры, которые вам нравятся — подберём стиль и назовём точную цену.\n\n📱 @Fulstak_raz`
     },
     {
-      keys: [
-        "маркетинг",
-        "seo",
-        "продвижение",
-        "реклама",
-        "ads",
-        "контент",
-        "content",
-        "копирайтинг",
-        "copywriting",
-        "smm",
-        "социальные сети",
-        "instagram",
-        "facebook",
-        "vk",
-        "youtube",
-        "tiktok",
-        "блог",
-        "blog",
-        "статьи",
-        "articles",
-        "email marketing",
-        "email"
-      ],
-      reply: ` Здравствуйте! 📈 Мы занимаемся маркетингом и продвижением:
-- SEO‑оптимизация — от 3000 ₽/мес
-- Таргетированная реклама (VK, Instagram, TikTok) — от 2000 ₽/мес
-- SMM‑ведение — от 4000 ₽/мес
-- Копирайтинг / статьи — от 500 ₽/шт
-- Email‑рассылки — от 1500 ₽
-
-Расскажите о вашем проекте — подберём стратегию и назовём стоимость.
-
-🌐 https://next-site-self-two.vercel.app
-📱 @Fulstak_raz `
+      keys: ["маркетинг", "seo", "продвижение", "реклама", "ads", "контент", "content", "копирайтинг", "copywriting", "smm", "социальные сети", "instagram", "facebook", "vk", "youtube", "tiktok", "блог", "blog", "статьи", "articles", "email marketing", "email"],
+      reply: `Здравствуйте! 📈 Мы занимаемся маркетингом и продвижением:\n\n- SEO‑оптимизация — от 3000 ₽/мес\n- Таргетированная реклама (VK, Instagram, TikTok) — от 2000 ₽/мес\n- SMM‑ведение — от 4000 ₽/мес\n- Копирайтинг / статьи — от 500 ₽/шт\n- Email‑рассылки — от 1500 ₽\n\nРасскажите о вашем проекте — подберём стратегию и назовём стоимость.\n\n🌐 https://next-site-self-two.vercel.app\n📱 @Fulstak_raz`
     },
     {
-      keys: [
-        "консультация",
-        "консультирование",
-        "стратегия",
-        "strategy",
-        "бизнес",
-        "business",
-        "план",
-        "planning",
-        "аналитика",
-        "analytics",
-        "аудит",
-        "audit",
-        "оптимизация",
-        "optimization"
-      ],
-      reply: ` Здравствуйте! 💼 Мы предоставляем консалтинг и стратегическое сопровождение:
-- Бизнес‑консультация — от 1500 ₽/час
-- Аудит сайта / рекламы — от 2000 ₽
-- Разработка стратегии продвижения — от 5000 ₽
-- Аналитика и оптимизация — индивидуально
-
-Опишите вашу задачу — обсудим и предложим решение.
-
-📱 @Fulstak_raz `
+      keys: ["консультация", "консультирование", "стратегия", "strategy", "бизнес", "business", "план", "planning", "аналитика", "analytics", "аудит", "audit", "оптимизация", "optimization"],
+      reply: `Здравствуйте! 💼 Мы предоставляем консалтинг и стратегическое сопровождение:\n\n- Бизнес‑консультация — от 1500 ₽/час\n- Аудит сайта / рекламы — от 2000 ₽\n- Разработка стратегии продвижения — от 5000 ₽\n- Аналитика и оптимизация — индивидуально\n\nОпишите вашу задачу — обсудим и предложим решение.\n\n📱 @Fulstak_raz`
     }
   ];
-
   for (const intent of intents) {
     if (intent.keys.some(k => t.includes(k))) return intent.reply;
   }
-
-  return ` Здравствуйте! 👋 Готов помочь вам с разработкой, дизайном, ботами или продвижением. Напишите, пожалуйста, что именно вам нужно — и я подскажу по стоимости и срокам.
-
-🌐 https://next-site-self-two.vercel.app
-📱 @Fulstak_raz `;
+  return `Здравствуйте! 👋\n\nГотов помочь вам с разработкой, дизайном, ботами или продвижением.\nНапишите, пожалуйста, что именно вам нужно — и я подскажу по стоимости и срокам.\n\n🌐 https://next-site-self-two.vercel.app\n📱 @Fulstak_raz`;
 }
 
 // === ОТПРАВКА СООБЩЕНИЙ ===
@@ -270,15 +68,12 @@ async function sendText(chatId, text) {
       chat_id: chatId,
       input_message_content: {
         "@type": "inputMessageText",
-        text: {
-          "@type": "formattedText",
-          text
-        }
-      }
+        text: { "@type": "formattedText", text },
+      },
     });
     console.log(`📤 Отправлено сообщение в чат ${chatId}`);
   } catch (err) {
-    console.log("❌ Ошибка отправки сообщения:", err);
+    console.error("❌ Ошибка отправки сообщения:", err);
   }
 }
 
@@ -301,8 +96,8 @@ client.on("update", async (update) => {
             use_chat_info_database: true,
             use_message_database: false,
             use_secret_chats: false,
-            api_id: YOUR_API_ID,
-            api_hash: YOUR_API_HASH,
+            api_id: Number(process.env.TELEGRAM_API_ID),
+            api_hash: process.env.TELEGRAM_API_HASH,
             system_language_code: "ru",
             device_model: "Railway",
             system_version: "Linux",
@@ -312,11 +107,10 @@ client.on("update", async (update) => {
           }
         });
       } catch (err) {
-        console.log("❌ Ошибка setTdlibParameters:", err);
+        console.error("❌ Ошибка setTdlibParameters:", err);
       }
     }
 
-    // === QR-КОД (единственный метод входа) ===
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
       console.log("🔗 ============================================================");
       console.log("🔗  SCAN THIS QR CODE LINK IN TELEGRAM (Settings → Devices):");
@@ -332,16 +126,12 @@ client.on("update", async (update) => {
     }
   }
 
-  // === НОВЫЕ СООБЩЕНИЯ ===
   if (update._ === "updateNewMessage") {
     const msg = update.message;
     if (msg.is_outgoing) return;
-
     const text = msg?.content?.text?.text || "";
     const chatId = msg.chat_id;
-
     console.log(`💬 Сообщение [chat_id=${chatId}] → ${text}`);
-
     const reply = detectIntent(text);
     await sendText(chatId, reply);
   }
@@ -350,13 +140,12 @@ client.on("update", async (update) => {
 // === СТАРТ КЛИЕНТА ===
 (async () => {
   if (process.env.RESET_SESSION === 'true') {
+    const fs = await import('fs');
     fs.rmSync('/data/td_database', { recursive: true, force: true });
     fs.rmSync('/data/td_files', { recursive: true, force: true });
-    console.log("🗑️ Старая сессия удалена. Убери RESET_SESSION и перезапусти.");
+    console.log("🗑️ Старая сессия удалена. Уберите RESET_SESSION и перезапустите.");
     process.exit(0);
   }
-
   await client.connect();
   console.log("✔ Клиент подключён. Жду QR-кода...");
 })();
-
