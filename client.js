@@ -4,14 +4,9 @@ import { TDLib } from "tdl-tdlib-addon";
 console.log("🚀 === VERTEX ULTIMATE TELEGRAM AGENT v3.3 (Stable TDLib) ===");
 console.log("⏳ Запуск клиента...");
 
-process.on("unhandledRejection", (err) => {
-  console.error("❌ Unhandled Rejection:", err);
-});
-process.on("uncaughtException", (err) => {
-  console.error("❌ Uncaught Exception:", err);
-});
+process.on("unhandledRejection", (err) => console.error("❌ Unhandled Rejection:", err));
+process.on("uncaughtException", (err) => console.error("❌ Uncaught Exception:", err));
 
-// === ИНИЦИАЛИЗАЦИЯ TDLib (ПАРАМЕТРЫ ТОЛЬКО ЗДЕСЬ) ===
 const tdlib = new TDLib();
 const client = new Client(tdlib, {
   apiId: Number(process.env.TELEGRAM_API_ID),
@@ -20,7 +15,6 @@ const client = new Client(tdlib, {
   filesDirectory: "/data/td_files",
 });
 
-// === ИНТЕНТЫ ОТВЕТОВ (без изменений) ===
 function detectIntent(text) {
   const t = text.toLowerCase();
   const intents = [
@@ -75,13 +69,43 @@ async function sendText(chatId, text) {
   }
 }
 
-// === ОБРАБОТКА ОБНОВЛЕНИЙ (БЕЗ ВТОРИЧНОГО setTdlibParameters) ===
 client.on("update", async (update) => {
   if (update._ === "updateAuthorizationState") {
     const state = update.authorization_state;
     console.log("🔐 AUTH STATE:", state._);
 
-    // QR-код — единственный способ входа (без номера телефона)
+    if (state._ === "authorizationStateWaitTdlibParameters") {
+      try {
+        await client.invoke({
+          "@type": "setTdlibParameters",
+          parameters: {
+            use_test_dc: false,
+            database_directory: "/data/td_database",
+            files_directory: "/data/td_files",
+            use_file_database: true,
+            use_chat_info_database: true,
+            use_message_database: false,
+            use_secret_chats: false,
+            api_id: Number(process.env.TELEGRAM_API_ID),
+            api_hash: process.env.TELEGRAM_API_HASH,
+            system_language_code: "ru",
+            device_model: "Railway",
+            system_version: "Linux",
+            application_version: "1.0",
+            enable_storage_optimizer: true,
+            ignore_file_names: true
+          }
+        });
+      } catch (err) {
+        console.error("❌ Ошибка setTdlibParameters:", err);
+      }
+    }
+
+    if (state._ === "authorizationStateWaitPhoneNumber") {
+      console.log("📱 Запрос QR-кода...");
+      await client.invoke({ "@type": "requestQrCodeAuthentication" });
+    }
+
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
       console.log("🔗 ============================================================");
       console.log("🔗  SCAN THIS QR CODE LINK IN TELEGRAM (Settings → Devices):");
@@ -108,7 +132,6 @@ client.on("update", async (update) => {
   }
 });
 
-// === СТАРТ КЛИЕНТА ===
 (async () => {
   if (process.env.RESET_SESSION === 'true') {
     const fs = await import('fs');
@@ -118,5 +141,5 @@ client.on("update", async (update) => {
     process.exit(0);
   }
   await client.connect();
-  console.log("✔ Клиент подключён. Жду QR-кода...");
+  console.log("✔ Клиент подключён. Ожидание авторизации...");
 })();
