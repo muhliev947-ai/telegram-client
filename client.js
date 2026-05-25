@@ -20,9 +20,9 @@ const client = new Client(tdlib, {
   apiId: Number(process.env.TELEGRAM_API_ID),
   apiHash: process.env.TELEGRAM_API_HASH,
 
-  // Храним базу в RAM → не переполняется, не ломается
-  databaseDirectory: "/tmp/td_database",
-  filesDirectory: "/tmp/td_files",
+  // Persistent storage — survives container restarts
+  databaseDirectory: "/data/td_database",
+  filesDirectory: "/data/td_files",
 });
 
 // === УМНЫЙ АВТООТВЕТЧИК ===
@@ -232,11 +232,11 @@ client.on("update", async (update) => {
             "@type": "tdlibParameters",
             use_test_dc: false,
 
-            database_directory: "/tmp/td_database",
-            files_directory: "/tmp/td_files",
+            database_directory: "/data/td_database",
+            files_directory: "/data/td_files",
 
-            use_file_database: false,
-            use_chat_info_database: false,
+            use_file_database: true,
+            use_chat_info_database: true,
             use_message_database: false,
             use_secret_chats: false,
 
@@ -259,13 +259,73 @@ client.on("update", async (update) => {
 
     // === QR-КОД ===
     if (state._ === "authorizationStateWaitOtherDeviceConfirmation") {
-      console.log("🔗 === QR LINK ===");
-      console.log(state.link);
+      console.log("🔗 ============================================================");
+      console.log("🔗  SCAN THIS QR CODE LINK IN TELEGRAM (Settings → Devices):");
+      console.log("🔗 ", state.link);
+      console.log("🔗 ============================================================");
+    }
+
+    // === НОМЕР ТЕЛЕФОНА ===
+    if (state._ === "authorizationStateWaitPhoneNumber") {
+      const phone = process.env.TELEGRAM_PHONE;
+      if (!phone) {
+        console.log("📱 Auth requires a phone number. Set the TELEGRAM_PHONE environment variable and restart.");
+        return;
+      }
+      console.log(`📱 Sending phone number: ${phone}`);
+      try {
+        await client.invoke({
+          "@type": "setAuthenticationPhoneNumber",
+          phone_number: phone,
+        });
+      } catch (err) {
+        console.log("❌ Ошибка setAuthenticationPhoneNumber:", err);
+      }
+    }
+
+    // === КОД ПОДТВЕРЖДЕНИЯ ===
+    if (state._ === "authorizationStateWaitCode") {
+      const code = process.env.TELEGRAM_CODE;
+      if (!code) {
+        console.log("🔑 Auth requires the confirmation code sent to your Telegram app.");
+        console.log("🔑 Set the TELEGRAM_CODE environment variable and restart.");
+        return;
+      }
+      console.log(`🔑 Sending authentication code: ${code}`);
+      try {
+        await client.invoke({
+          "@type": "checkAuthenticationCode",
+          code: code,
+        });
+      } catch (err) {
+        console.log("❌ Ошибка checkAuthenticationCode:", err);
+      }
+    }
+
+    // === ПАРОЛЬ 2FA ===
+    if (state._ === "authorizationStateWaitPassword") {
+      const password = process.env.TELEGRAM_PASSWORD;
+      if (!password) {
+        console.log("🔒 Auth requires your 2FA cloud password.");
+        console.log("🔒 Set the TELEGRAM_PASSWORD environment variable and restart.");
+        return;
+      }
+      console.log("🔒 Sending 2FA password...");
+      try {
+        await client.invoke({
+          "@type": "checkAuthenticationPassword",
+          password: password,
+        });
+      } catch (err) {
+        console.log("❌ Ошибка checkAuthenticationPassword:", err);
+      }
     }
 
     // === ГОТОВО ===
     if (state._ === "authorizationStateReady") {
-      console.log("🎉 === AUTH OK — АГЕНТ ГОТОВ ===");
+      console.log("✅ ============================================================");
+      console.log("✅  AUTHENTICATED — Bot is ready and listening for messages");
+      console.log("✅ ============================================================");
       console.log("🤖 Агент VERTEX работает 24/7 и слушает каналы и личку...");
     }
   }
